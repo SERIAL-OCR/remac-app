@@ -1,10 +1,3 @@
-//
-//  AppleSerialScannerApp.swift
-//  AppleSerialScanner
-//
-//  Created by APPLE on 02/09/25.
-//
-
 import SwiftUI
 
 @main
@@ -13,5 +6,9 @@ struct AppleSerialScannerApp: App {
         WindowGroup {
             ContentView()
         }
+        #if os(macOS)
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        #endif
     }
 }
