@@ -105,12 +105,18 @@ class LightingAnalyzer {
         let highlights = detectHighlights(in: image)
         let brightRegions = findBrightRegions(in: image)
 
-        // Calculate glare intensity based on bright regions and highlights
-        let glareIntensity = min(1.0, (highlights.count * 0.1) + (brightRegions.count * 0.05))
-        let glarePercentage = Float(brightRegions.count) / Float(max(1, image.extent.width * image.extent.height / 10000))
+        // Break up complex expressions for compiler
+        let highlightScore = Double(highlights.count) * 0.1
+        let brightRegionScore = Double(brightRegions.count) * 0.05
+        let rawGlareIntensity = highlightScore + brightRegionScore
+        let glareIntensity = min(1.0, rawGlareIntensity)
+
+        let imageArea = image.extent.width * image.extent.height
+        let regionCount = Double(brightRegions.count)
+        let glarePercentage = imageArea > 0 ? Float(regionCount / max(1.0, imageArea / 10000.0)) : 0.0
 
         return GlareAnalysis(
-            glareIntensity: glareIntensity,
+            glareIntensity: Float(glareIntensity),
             glareRegions: brightRegions,
             glarePercentage: glarePercentage
         )
@@ -182,9 +188,7 @@ class LightingAnalyzer {
 
     /// Calculate brightness in a specific region
     private func calculateBrightnessInRegion(of image: CIImage, region: CGRect) -> Float {
-        guard let croppedImage = image.cropped(to: region) else {
-            return 0.5
-        }
+        let croppedImage = image.cropped(to: region)
         return calculateAverageBrightness(of: croppedImage)
     }
 
@@ -275,9 +279,10 @@ class LightingAnalyzer {
             return 0.5
         }
 
-        let r = Float(pixelData[0]) / 255.0
-        let g = Float(pixelData[1]) / 255.0
-        let b = Float(pixelData[2]) / 255.0
+        let buffer = pixelData.bindMemory(to: UInt8.self, capacity: 4)
+        let r = Float(buffer[0]) / 255.0
+        let g = Float(buffer[1]) / 255.0
+        let b = Float(buffer[2]) / 255.0
 
         // Calculate luminance using standard formula
         return 0.299 * r + 0.587 * g + 0.114 * b

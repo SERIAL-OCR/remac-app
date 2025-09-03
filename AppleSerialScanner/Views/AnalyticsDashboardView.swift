@@ -341,7 +341,7 @@ struct PerformanceChart: View {
                 .symbol(.circle)
             }
         }
-        .chartYAxis {ho
+        .chartYAxis {
             AxisMarks(format: FloatingPointFormatStyle<Double>.number.precision(.fractionLength(1)))
         }
         .chartXAxis {
