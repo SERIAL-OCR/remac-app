@@ -3,10 +3,10 @@ import Vision
 import VisionKit
 import AVFoundation
 import Combine
-import CoreImage
+@preconcurrency import CoreImage
 
 @MainActor
-class SerialScannerViewModel: ObservableObject {
+class SerialScannerViewModel: NSObject, ObservableObject {
     // MARK: - Published Properties
     @Published var isProcessing = false
     @Published var guidanceText = "Position the serial number within the frame"
@@ -18,6 +18,21 @@ class SerialScannerViewModel: ObservableObject {
     @Published var validationResult: ValidationResult?
     @Published var showValidationAlert = false
     @Published var validationAlertMessage = ""
+    
+    // MARK: - Auto Capture Properties
+    private var isAutoCapturing = false
+    private var processingStartTime: Date?
+    private var frameResults: [FrameResult] = []
+    
+    // MARK: - Service Properties
+    private let backendService = BackendService()
+    private let validator = AppleSerialValidator()
+    private let surfaceDetector = SurfaceDetector()
+    private let lightingAnalyzer = LightingAnalyzer()
+    private let angleDetector = AngleDetector()
+    
+    // MARK: - Batch Processing Property
+    lazy var batchProcessor = BatchProcessor(scannerViewModel: self)
 
     // MARK: - Analytics Properties
     private let analyticsService = AnalyticsService()
@@ -48,6 +63,8 @@ class SerialScannerViewModel: ObservableObject {
     private var videoOutput = AVCaptureVideoDataOutput()
     private var photoOutput = AVCapturePhotoOutput()
 
+    
+
     // MARK: - Analytics Methods
     private func startAnalyticsSession() {
         currentSessionId = UUID()
@@ -56,7 +73,9 @@ class SerialScannerViewModel: ObservableObject {
         lightingConditionEvents.removeAll()
         angleCorrectionEvents.removeAll()
 
-        analyticsService.recordScanEvent(.scanStarted(sessionId: currentSessionId!))
+        if let sessionId = currentSessionId {
+            analyticsService.recordScanEvent(.scanStarted(sessionId: sessionId))
+        }
     }
 
     private func recordFrameProcessing(processingTime: TimeInterval, confidence: Float) {
@@ -197,7 +216,7 @@ class SerialScannerViewModel: ObservableObject {
             angleCorrectionApplied: isAngleDetectionEnabled
         )
 
-        let systemHealth = SystemHealthMetrics()
+        let systemHealth = SystemHealthMonitor.captureCurrentMetrics().toSystemHealthMetrics()
 
         return AnalyticsData(
             deviceInfo: deviceInfo,
@@ -212,7 +231,7 @@ class SerialScannerViewModel: ObservableObject {
         guard let validationResult = validationResult else { return nil }
 
         return ScanResult(
-            serialNumber: validationResult.serialNumber,
+            serialNumber: validationResult.serial,
             confidence: confidence,
             processingTime: 0.0, // Would need to track actual processing time
             surfaceType: detectedSurfaceType.rawValue,
@@ -220,7 +239,7 @@ class SerialScannerViewModel: ObservableObject {
             angleCorrection: angleCorrectionApplied,
             frameCount: processedFrames,
             timestamp: Date(),
-            validationStatus: validationResult.isValid ? "valid" : "invalid"
+            validationStatus: validationResult.level == .ACCEPT ? "valid" : "invalid"
         )
     }
     
@@ -235,12 +254,15 @@ class SerialScannerViewModel: ObservableObject {
     let minConfidence: Float = 0.7
     let deviceType: String
     
-    init() {
+    override init() {
         #if os(iOS)
         self.deviceType = UIDevice.current.model
         #else
         self.deviceType = "Mac"
         #endif
+
+        // All stored properties are initialized at this point; call super.init() before using self
+        super.init()
 
         // Set up accessory preset manager first
         _ = accessoryPresetManager // Initialize the manager
@@ -276,22 +298,56 @@ class SerialScannerViewModel: ObservableObject {
     let accessoryPresetManager = AccessoryPresetManager()
     
     // MARK: - Frame Processing
-    private var frameResults: [FrameResult] = []
-    private var processingStartTime: Date?
-    private var isAutoCapturing = false
+    // make internal so delegate extensions in a separate file can call it
+    func processFrame(_ image: CGImage) {
+        guard isAutoCapturing,
+              let processingStartTime = processingStartTime,
+              Date().timeIntervalSince(processingStartTime) < processingWindow,
+              processedFrames < maxFrames else {
+            if isAutoCapturing {
+                stopAutoCapture()
+            }
+            return
+        }
+
+        processedFrames += 1
+
+        // Convert CGImage to CIImage for surface detection
+        let ciImage = CIImage(cgImage: image)
+
+        // Perform surface detection if enabled (async to avoid blocking main thread)
+        if isSurfaceDetectionEnabled && processedFrames <= 3 {
+            // Only detect surface on first few frames to avoid performance impact
+            detectSurfaceAsync(in: ciImage)
+        }
+
+        // Perform lighting analysis if enabled
+        if isLightingDetectionEnabled && processedFrames <= 3 {
+            // Analyze lighting conditions for adaptive processing
+            analyzeLightingAsync(in: ciImage)
+        }
+
+        // Perform angle detection if enabled
+        if isAngleDetectionEnabled && processedFrames <= 3 {
+            // Detect text orientation for angle correction
+            detectAngleAsync(in: ciImage)
+        }
+
+        // Apply surface-adaptive OCR settings
+        updateOCRSettingsForSurface()
+
+        guard let textRecognitionRequest = textRecognitionRequest else { return }
+
+        textRecognitionRequest.regionOfInterest = roiRectNormalized
+        let handler = VNImageRequestHandler(cgImage: image, orientation: currentCGImageOrientation(), options: [:])
+
+        do {
+            try handler.perform([textRecognitionRequest])
+        } catch {
+            print("Vision processing error: \(error)")
+        }
+    }
     
-    // MARK: - Backend Integration
-    private let backendService = BackendService()
-    private let validator = AppleSerialValidator()
-    private let surfaceDetector = SurfaceDetector()
-    private let lightingAnalyzer = LightingAnalyzer()
-    private let angleDetector = AngleDetector()
-
-    // MARK: - Batch Processing
-    private(set) lazy var batchProcessor: BatchProcessor = {
-        BatchProcessor(scannerViewModel: self)
-    }()
-
     // MARK: - Vision Setup
     private func setupVision() {
         textRecognitionRequest = VNRecognizeTextRequest { [weak self] request, error in
@@ -405,22 +461,26 @@ class SerialScannerViewModel: ObservableObject {
         detectedTextOrientation = nil
         angleCorrectionApplied = false
 
-        processingQueue.async { [weak self] in
-            self?.captureSession?.startRunning()
+        Task { [weak self] in
+            await MainActor.run {
+                self?.captureSession?.startRunning()
+            }
         }
     }
     
     func stopScanning() {
         // Complete analytics session if one is active
-        if let confidence = bestConfidence > 0 ? bestConfidence : nil {
-            completeAnalyticsSession(success: validationResult?.isValid ?? false, finalConfidence: confidence)
+        if bestConfidence > 0 {
+            completeAnalyticsSession(success: (validationResult?.level == .ACCEPT), finalConfidence: bestConfidence)
         }
 
         // Reset scanning state
         isProcessing = false
 
-        processingQueue.async { [weak self] in
-            self?.captureSession?.stopRunning()
+        Task { [weak self] in
+            await MainActor.run {
+                self?.captureSession?.stopRunning()
+            }
         }
     }
     
@@ -480,68 +540,12 @@ class SerialScannerViewModel: ObservableObject {
         processBestResult()
     }
     
-    // MARK: - Frame Processing
-    private func processFrame(_ image: CGImage) {
-        guard isAutoCapturing,
-              let processingStartTime = processingStartTime,
-              Date().timeIntervalSince(processingStartTime) < processingWindow,
-              processedFrames < maxFrames else {
-            if isAutoCapturing {
-                stopAutoCapture()
-            }
-            return
-        }
-
-        processedFrames += 1
-
-        // Convert CGImage to CIImage for surface detection
-        let ciImage = CIImage(cgImage: image)
-
-        // Perform surface detection if enabled (async to avoid blocking main thread)
-        if isSurfaceDetectionEnabled && processedFrames <= 3 {
-            // Only detect surface on first few frames to avoid performance impact
-            detectSurfaceAsync(in: ciImage)
-        }
-
-        // Perform lighting analysis if enabled
-        if isLightingDetectionEnabled && processedFrames <= 3 {
-            // Analyze lighting conditions for adaptive processing
-            analyzeLightingAsync(in: ciImage)
-        }
-
-        // Perform angle detection if enabled
-        if isAngleDetectionEnabled && processedFrames <= 3 {
-            // Detect text orientation for angle correction
-            detectAngleAsync(in: ciImage)
-        }
-
-        // Apply surface-adaptive OCR settings
-        updateOCRSettingsForSurface()
-
-        guard let textRecognitionRequest = textRecognitionRequest else { return }
-
-        textRecognitionRequest.regionOfInterest = roiRectNormalized
-        let handler = VNImageRequestHandler(cgImage: image, orientation: currentCGImageOrientation(), options: [:])
-
-        do {
-            try handler.perform([textRecognitionRequest])
-        } catch {
-            print("Vision processing error: \(error)")
-        }
-    }
-    
     // MARK: - Text Recognition Handler
     private func handleTextRecognition(request: VNRequest, error: Error?) {
         let processingStartTime = Date()
 
-        guard error == nil else {
-            print("Text recognition error: \(error!)")
-            // Record failed frame processing
-            recordFrameProcessing(processingTime: Date().timeIntervalSince(processingStartTime), confidence: 0.0)
-            return
-        }
-
-        guard let observations = request.results as? [VNRecognizedTextObservation] else {
+        guard let observations = request.results as? [VNRecognizedTextObservation], error == nil else {
+            print("Text recognition error: \(error?.localizedDescription ?? "Unknown error")")
             recordFrameProcessing(processingTime: Date().timeIntervalSince(processingStartTime), confidence: 0.0)
             return
         }
@@ -587,12 +591,10 @@ class SerialScannerViewModel: ObservableObject {
     
     // MARK: - Best Result Processing
     private func processBestResult() {
-        guard !frameResults.isEmpty else {
+        guard let bestResult = frameResults.max(by: { $0.confidence < $1.confidence }) else {
             updateGuidanceText("No serial number detected. Try again.")
             return
         }
-        
-        let bestResult = frameResults.max { $0.confidence < $1.confidence }!
         
         // Use client-side validation
         let validationResult = validator.validate_with_corrections(bestResult.text, bestResult.confidence)
@@ -631,11 +633,12 @@ class SerialScannerViewModel: ObservableObject {
                     device_type: deviceType,
                     source: PlatformDetector.current == .iOS ? "ios" : "mac"
                 )
-                
+
                 let response = try await backendService.submitSerial(submission)
-                
+
                 await MainActor.run {
-                    resultMessage = "Serial submitted: \(response.serial)"
+                    // response.message is non-optional in SerialResponse, prefer serial_id then message
+                    resultMessage = "Serial submitted: \(response.serial_id ?? response.message)"
                     showingResultAlert = true
                     updateGuidanceText("Serial submitted successfully!")
                 }
@@ -664,6 +667,7 @@ class SerialScannerViewModel: ObservableObject {
     // MARK: - Orientation Helpers
     private func currentCGImageOrientation() -> CGImagePropertyOrientation {
         if let connection = videoOutput.connection(with: .video) {
+            #if os(iOS)
             switch connection.videoOrientation {
             case .portrait:
                 return .right
@@ -676,8 +680,9 @@ class SerialScannerViewModel: ObservableObject {
             @unknown default:
                 break
             }
+            #endif
         }
-        
+
         #if os(iOS)
         switch UIDevice.current.orientation {
         case .portrait:
@@ -738,117 +743,25 @@ class SerialScannerViewModel: ObservableObject {
     }
 
     private func analyzeLightingAsync(in image: CIImage) {
-        // Perform lighting analysis on background thread
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
+        // Run lighting analysis on main actor to avoid Sendable capture issues
+        let illuminationProfile = lightingAnalyzer.analyzeIllumination(in: image)
+        let lightingCondition = lightingAnalyzer.classifyLightingCondition(illuminationProfile)
 
-            let illuminationProfile = self.lightingAnalyzer.analyzeIllumination(in: image)
-            let lightingCondition = self.lightingAnalyzer.classifyLightingCondition(illuminationProfile)
-
-            DispatchQueue.main.async {
-                // Update detected lighting condition and confidence
-                self.detectedLightingCondition = lightingCondition
-                self.lightingDetectionConfidence = illuminationProfile.averageBrightness
-
-                // Update guidance text with lighting info
-                self.updateGuidanceTextWithLightingInfo()
-
-                // Log lighting analysis for debugging
-                print("Lighting detected: \(lightingCondition.description) (brightness: \(Int(illuminationProfile.averageBrightness * 100))%)")
-            }
-        }
+        // Update UI on main actor
+        detectedLightingCondition = lightingCondition
+        lightingDetectionConfidence = illuminationProfile.averageBrightness
+        updateGuidanceTextWithLightingInfo()
+        print("Lighting detected: \(lightingCondition.description) (brightness: \(Int(illuminationProfile.averageBrightness * 100))%)")
     }
 
     private func detectAngleAsync(in image: CIImage) {
-        // Perform angle detection on background thread
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
+        // Run angle detection on main actor to avoid Sendable capture issues
+        let textOrientation = angleDetector.detectTextOrientation(in: image)
 
-            let textOrientation = self.angleDetector.detectTextOrientation(in: image)
-
-            DispatchQueue.main.async {
-                // Update detected text orientation
-                self.detectedTextOrientation = textOrientation
-
-                // Update guidance text with angle info
-                self.updateGuidanceTextWithAngleInfo()
-
-                // Log angle detection for debugging
-                if textOrientation.confidence > 0.5 {
-                    print("Angle detected: \(Int(textOrientation.rotationAngle))° (confidence: \(Int(textOrientation.confidence * 100))%)")
-                }
-            }
-        }
-    }
-
-    // MARK: - Guidance Text Updates
-
-    private func updateGuidanceTextWithLightingInfo() {
-        guard isLightingDetectionEnabled else { return }
-
-        let lightingGuidance = getLightingGuidanceText()
-        let surfaceGuidance = getSurfaceGuidanceText()
-        let angleGuidance = getAngleGuidanceText()
-
-        var components: [String] = []
-
-        if detectedSurfaceType != .unknown {
-            components.append("Surface: \(detectedSurfaceType.description)")
-        }
-        if detectedLightingCondition != .unknown {
-            components.append("Lighting: \(detectedLightingCondition.description)")
-        }
-        if let orientation = detectedTextOrientation, orientation.confidence > 0.5 {
-            components.append("Angle: \(Int(orientation.rotationAngle))°")
-        }
-
-        let header = components.isEmpty ? "" : components.joined(separator: " | ")
-        let guidance = [lightingGuidance, angleGuidance].filter { !$0.isEmpty }.joined(separator: " ")
-
-        if !header.isEmpty {
-            guidanceText = "\(header)\n\(guidance)"
-        } else {
-            guidanceText = guidance
-        }
-    }
-
-    private func updateGuidanceTextWithAngleInfo() {
-        updateGuidanceTextWithLightingInfo() // Consolidated method
-    }
-
-    private func getLightingGuidanceText() -> String {
-        switch detectedLightingCondition {
-        case .optimal:
-            return "Optimal lighting detected. Position the serial number within the frame."
-        case .bright:
-            return "Bright light detected. Try to reduce direct light for better results."
-        case .dim:
-            return "Low light detected. Ensure adequate lighting for best results."
-        case .uneven:
-            return "Uneven lighting detected. Try to position for more uniform illumination."
-        case .glare:
-            return "Glare detected. Adjust angle to minimize reflections."
-        case .mixed:
-            return "Mixed lighting detected. Find a more consistent light source."
-        case .unknown:
-            return "Analyzing lighting conditions..."
-        }
-    }
-
-    private func getAngleGuidanceText() -> String {
-        guard let orientation = detectedTextOrientation, orientation.confidence > 0.5 else {
-            return "Analyzing text orientation..."
-        }
-
-        let angle = abs(orientation.rotationAngle)
-        if angle < 5 {
-            return "Text appears horizontal. Good orientation detected."
-        } else if angle < 30 {
-            return "Slight angle detected. Minor adjustment may improve results."
-        } else if angle < 60 {
-            return "Moderate angle detected. Consider adjusting device position."
-        } else {
-            return "Significant angle detected. Rotate device for better alignment."
+        detectedTextOrientation = textOrientation
+        updateGuidanceTextWithAngleInfo()
+        if textOrientation.confidence > 0.5 {
+            print("Angle detected: \(Int(textOrientation.rotationAngle))° (confidence: \(Int(textOrientation.confidence * 100))%)")
         }
     }
 
@@ -860,8 +773,12 @@ class SerialScannerViewModel: ObservableObject {
         if isSurfaceDetectionEnabled && detectedSurfaceType != .unknown {
             let surfaceSettings = OCRSettings.settingsFor(surface: detectedSurfaceType)
 
-            // Use the more restrictive settings between surface and accessory
-            textRecognitionRequest?.recognitionLevel = max(accessorySettings.recognitionLevel, surfaceSettings.recognitionLevel)
+            // Prefer accurate if either setting requests it, otherwise use fast
+            if accessorySettings.recognitionLevel == .accurate || surfaceSettings.recognitionLevel == .accurate {
+                textRecognitionRequest?.recognitionLevel = .accurate
+            } else {
+                textRecognitionRequest?.recognitionLevel = .fast
+            }
             textRecognitionRequest?.minimumTextHeight = max(accessorySettings.minimumTextHeight, surfaceSettings.minimumTextHeight)
         } else {
             // Use accessory preset settings only
@@ -902,6 +819,47 @@ class SerialScannerViewModel: ObservableObject {
                 guidance += "\n💡 Paper label - Keep text in focus"
             case .unknown:
                 break
+            @unknown default:
+                break
+            }
+        }
+
+        updateGuidanceText(guidance)
+    }
+
+    // Provide lighting guidance text
+    private func updateGuidanceTextWithLightingInfo() {
+        var guidance = getPresetGuidanceText()
+
+        if detectedLightingCondition != .unknown && lightingDetectionConfidence > 0.01 {
+            let lightingInfo = "Lighting: \(detectedLightingCondition.description)"
+            guidance += "\n\(lightingInfo)"
+
+            switch detectedLightingCondition {
+            case .bright:
+                guidance += "\n💡 Lighting is good. Ensure even illumination."
+            case .dim:
+                guidance += "\n💡 Low light detected - increase lighting or enable flash."
+            case .mixed:
+                guidance += "\n💡 Mixed lighting - try to reduce strong shadows or reflections."
+            default:
+                break
+            }
+        }
+
+        updateGuidanceText(guidance)
+    }
+
+    // Provide angle guidance text
+    private func updateGuidanceTextWithAngleInfo() {
+        var guidance = getPresetGuidanceText()
+
+        if let orientation = detectedTextOrientation {
+            let angleInfo = "Rotate: \(Int(orientation.rotationAngle))° (confidence: \(Int(orientation.confidence * 100))%)"
+            guidance += "\n\(angleInfo)"
+
+            if orientation.confidence > 0.5 {
+                guidance += "\n🔧 Try rotating the device slightly to improve alignment."
             }
         }
 
@@ -966,30 +924,4 @@ struct FrameResult {
     let timestamp: Date
 }
 
-// MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
-extension SerialScannerViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        
-        let ciImage = CIImage(cvImageBuffer: imageBuffer)
-        let context = CIContext()
-        
-        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return }
-        
-        processFrame(cgImage)
-    }
-}
-
-// MARK: - AVCapturePhotoCaptureDelegate
-extension SerialScannerViewModel: AVCapturePhotoCaptureDelegate {
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        guard error == nil,
-              let imageData = photo.fileDataRepresentation(),
-              let image = UIImage(data: imageData),
-              let cgImage = image.cgImage else {
-            return
-        }
-        
-        processFrame(cgImage)
-    }
-}
+// Delegate methods moved to DelegateExtensions.swift (nonisolated implementations)

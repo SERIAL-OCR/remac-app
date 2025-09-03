@@ -19,6 +19,8 @@ struct AnalyticsDashboardView: View {
         case performance = "Performance"
         case usage = "Usage"
         case reliability = "Reliability"
+        case successRate = "Success Rate"
+        case processingTime = "Processing Time"
     }
 
     var body: some View {
@@ -29,7 +31,8 @@ struct AnalyticsDashboardView: View {
                     // Header with controls
                     AnalyticsHeaderView(
                         selectedTimeRange: $selectedTimeRange,
-                        selectedMetric: $selectedMetric
+                        selectedMetric: $selectedMetric,
+                        analyticsService: analyticsService
                     )
 
                     if analyticsService.isLoading {
@@ -83,6 +86,7 @@ struct AnalyticsDashboardView: View {
 struct AnalyticsHeaderView: View {
     @Binding var selectedTimeRange: AnalyticsDashboardView.TimeRange
     @Binding var selectedMetric: AnalyticsDashboardView.MetricType
+    @ObservedObject var analyticsService: AnalyticsService
 
     var body: some View {
         VStack(spacing: 16) {
@@ -93,7 +97,7 @@ struct AnalyticsHeaderView: View {
 
                 Spacer()
 
-                if let lastUpdate = Date() { // Would come from service
+                if let lastUpdate = analyticsService.lastUpdate {
                     Text("Updated \(lastUpdate.formatted(.relative(presentation: .named)))")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -173,7 +177,7 @@ struct AnalyticsMetricsCards: View {
     }
 
     private func calculateTrend(_ metric: AnalyticsDashboardView.MetricType) -> String? {
-        // Calculate trend from weekly data
+        // TODO: Calculate trend from weekly data
         // This would be implemented based on historical data
         return "+5.2%" // Placeholder
     }
@@ -315,7 +319,7 @@ struct AccuracyChart: View {
             }
         }
         .chartYAxis {
-            AxisMarks(format: .percent)
+            AxisMarks(format: Decimal.FormatStyle.Percent.percent.scale(1))
         }
         .chartXAxis {
             AxisMarks(format: .dateTime.day().month())
@@ -337,8 +341,8 @@ struct PerformanceChart: View {
                 .symbol(.circle)
             }
         }
-        .chartYAxis {
-            AxisMarks(format: .number.precision(.fractionLength(1)))
+        .chartYAxis {ho
+            AxisMarks(format: FloatingPointFormatStyle<Double>.number.precision(.fractionLength(1)))
         }
         .chartXAxis {
             AxisMarks(format: .dateTime.day().month())
@@ -526,7 +530,7 @@ struct SystemHealthView: View {
 
                 SystemHealthCard(
                     title: "Battery",
-                    value: systemHealth.batteryLevel != nil ? "\(Int(systemHealth.batteryLevel! * 100))%" : "N/A",
+                    value: batteryLevelValue(systemHealth.batteryLevel),
                     icon: "battery.100",
                     color: .green
                 )
@@ -546,6 +550,13 @@ struct SystemHealthView: View {
                 )
             }
         }
+    }
+
+    private func batteryLevelValue(_ batteryLevel: Float?) -> String {
+        if let level = batteryLevel {
+            return "\(Int(level * 100))%"
+        }
+        return "N/A"
     }
 }
 

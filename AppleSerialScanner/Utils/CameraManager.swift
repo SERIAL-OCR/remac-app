@@ -1,5 +1,9 @@
 import AVFoundation
+#if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 class CameraManager: NSObject, ObservableObject {
     @Published var isAuthorized = false

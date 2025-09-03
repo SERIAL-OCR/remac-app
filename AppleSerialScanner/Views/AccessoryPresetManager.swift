@@ -2,7 +2,7 @@ import SwiftUI
 import Vision
 
 // MARK: - Accessory Types
-enum AccessoryType: String, CaseIterable, Identifiable {
+enum AccessoryType: String, CaseIterable, Identifiable, Codable {
     case iphone = "iPhone"
     case ipad = "iPad"
     case macbook = "MacBook"
@@ -170,13 +170,16 @@ class AccessoryPresetManager: ObservableObject {
     private let userDefaultsKey = "selectedAccessoryType"
 
     init() {
-        // Load saved preset or default to auto
+        // Initialize currentOCRSettings with default settings first
+        currentOCRSettings = AccessoryOCRSettings.settingsFor(accessory: .auto)
+        
+        // Then load saved preset if available
         if let savedTypeRaw = UserDefaults.standard.string(forKey: userDefaultsKey),
            let savedType = AccessoryType(rawValue: savedTypeRaw) {
             selectedAccessoryType = savedType
+            // Update OCR settings after setting the accessory type
+            currentOCRSettings = AccessoryOCRSettings.settingsFor(accessory: savedType)
         }
-
-        currentOCRSettings = AccessoryOCRSettings.settingsFor(accessory: selectedAccessoryType)
     }
 
     private func saveSelectedPreset() {

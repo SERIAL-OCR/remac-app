@@ -45,31 +45,6 @@
 			path = AppleSerialScannerUITests;
 			sourceTree = "<group>";
 		};
-		1837826E2E663BB7000BB20E /* Models */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Models;
-			sourceTree = "<group>";
-		};
-		183782702E663BCE000BB20E /* Views */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Views;
-			sourceTree = "<group>";
-		};
-		183782712E663BD3000BB20E /* Services */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Services;
-			sourceTree = "<group>";
-		};
-		183782732E663C10000BB20E /* Utils */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Utils;
-			sourceTree = "<group>";
-		};
-		183782752E663C4B000BB20E /* ViewModels */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ViewModels;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,15 +75,10 @@
 		183782382E663AB9000BB20E = {
 			isa = PBXGroup;
 			children = (
-				183782752E663C4B000BB20E /* ViewModels */,
-				183782732E663C10000BB20E /* Utils */,
-				183782712E663BD3000BB20E /* Services */,
-				1837826E2E663BB7000BB20E /* Models */,
 				183782432E663AB9000BB20E /* AppleSerialScanner */,
 				183782522E663ABA000BB20E /* AppleSerialScannerTests */,
 				1837825C2E663ABA000BB20E /* AppleSerialScannerUITests */,
 				183782422E663AB9000BB20E /* Products */,
-				183782702E663BCE000BB20E /* Views */,
 			);
 			sourceTree = "<group>";
 		};
@@ -139,11 +109,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				183782432E663AB9000BB20E /* AppleSerialScanner */,
-				1837826E2E663BB7000BB20E /* Models */,
-				183782702E663BCE000BB20E /* Views */,
-				183782712E663BD3000BB20E /* Services */,
-				183782732E663C10000BB20E /* Utils */,
-				183782752E663C4B000BB20E /* ViewModels */,
 			);
 			name = AppleSerialScanner;
 			packageProductDependencies = (

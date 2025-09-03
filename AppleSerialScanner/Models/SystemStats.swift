@@ -34,8 +34,9 @@ struct SystemStats: Codable {
     }
 
     var lastScanTime: Date? {
-        // TODO: Parse from system.lastActivity if available
-        return nil
+        guard let lastActivityString = system.lastActivity else { return nil }
+        let formatter = ISO8601DateFormatter()
+        return formatter.date(from: lastActivityString)
     }
 }
 

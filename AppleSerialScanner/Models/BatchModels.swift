@@ -100,7 +100,7 @@ struct BatchSettings: Codable {
 }
 
 // MARK: - Scan Result Model
-struct ScanResult {
+struct BatchScanResult {
     let serial: String
     let confidence: Float
     let deviceType: AccessoryType
@@ -108,8 +108,8 @@ struct ScanResult {
     let success: Bool
     let errorMessage: String?
 
-    static func success(serial: String, confidence: Float, deviceType: AccessoryType) -> ScanResult {
-        ScanResult(
+    static func success(serial: String, confidence: Float, deviceType: AccessoryType) -> BatchScanResult {
+        BatchScanResult(
             serial: serial,
             confidence: confidence,
             deviceType: deviceType,
@@ -119,8 +119,8 @@ struct ScanResult {
         )
     }
 
-    static func failure(deviceType: AccessoryType, errorMessage: String) -> ScanResult {
-        ScanResult(
+    static func failure(deviceType: AccessoryType, errorMessage: String) -> BatchScanResult {
+        BatchScanResult(
             serial: "",
             confidence: 0.0,
             deviceType: deviceType,

@@ -45,20 +45,18 @@ class AppleNumbersService: ObservableObject {
         scanHistory: [ScanHistory],
         includeCharts: Bool = true
     ) async throws -> URL {
-        let headers = ["Device Type", "Serial Number", "Confidence", "Source", "Timestamp", "Validation"]
+        let headers = ["Device Model", "Serial Number", "Status", "Timestamp"]
 
         let data = scanHistory.map { scan in
             [
-                scan.deviceType,
-                scan.serial,
-                String(format: "%.1f%%", scan.confidence * 100),
-                scan.source,
-                scan.timestamp.formatted(),
-                scan.validationPassed ? "Valid" : "Invalid"
+                scan.deviceModel ?? "Unknown",
+                scan.serialNumber,
+                scan.status,
+                scan.timestamp.formatted()
             ]
         }
 
-        let template = includeCharts ? NumbersTemplate.inventoryReport : nil
+        let template = includeCharts ? NumbersTemplate.standard : NumbersTemplate.minimal
         return try await createNumbersDocument(
             title: title,
             headers: headers,
@@ -105,7 +103,7 @@ class AppleNumbersService: ObservableObject {
             title: title,
             headers: [], // Headers included in data
             data: allData,
-            template: NumbersTemplate.batchReport
+            template: .standard
         )
     }
 
@@ -124,23 +122,14 @@ class AppleNumbersService: ObservableObject {
             name: "Data",
             headers: headers,
             rows: data,
-            style: template?.tableStyle ?? .standard
+            style: .standard // Simplified, as tableStyle is not on the new model
         )
         tables.append(mainTable)
 
         // Add summary tables based on template
-        if let template = template {
-            switch template.type {
-            case .inventoryReport:
-                tables.append(createSummaryTable(data: data))
-                tables.append(createDeviceBreakdownTable(data: data))
-            case .batchReport:
-                tables.append(createBatchStatisticsTable(data: data))
-            case .analytics:
-                tables.append(createAnalyticsTable(data: data))
-            case .custom:
-                break
-            }
+        if let template = template, template.includeStatistics {
+            tables.append(createSummaryTable(data: data))
+            tables.append(createDeviceBreakdownTable(data: data))
         }
 
         return NumbersDocumentData(
@@ -153,7 +142,8 @@ class AppleNumbersService: ObservableObject {
     private func createSummaryTable(data: [[String]]) -> NumbersTable {
         // Calculate summary statistics
         let totalRecords = data.count
-        let validRecords = data.filter { $0.last == "Valid" }.count
+        // Assuming the 'status' column is the third one now
+        let validRecords = data.filter { $0.count > 2 && $0[2] == "Valid" }.count
         let invalidRecords = totalRecords - validRecords
 
         return NumbersTable(
@@ -174,7 +164,7 @@ class AppleNumbersService: ObservableObject {
         var deviceCounts: [String: Int] = [:]
 
         for row in data {
-            if row.count > 0 {
+            if !row.isEmpty {
                 let deviceType = row[0]
                 deviceCounts[deviceType, default: 0] += 1
             }
@@ -270,50 +260,8 @@ enum NumbersTableStyle: String, Codable {
     case analytics
 }
 
-struct NumbersTemplate: Codable {
-    let type: NumbersTemplateType
-    let name: String
-    let description: String
-    let tableStyle: NumbersTableStyle
-    let includeCharts: Bool
-    let includeFormatting: Bool
-
-    static let inventoryReport = NumbersTemplate(
-        type: .inventoryReport,
-        name: "Inventory Report",
-        description: "Complete inventory with summaries and charts",
-        tableStyle: .standard,
-        includeCharts: true,
-        includeFormatting: true
-    )
-
-    static let batchReport = NumbersTemplate(
-        type: .batchReport,
-        name: "Batch Report",
-        description: "Batch processing results with statistics",
-        tableStyle: .summary,
-        includeCharts: false,
-        includeFormatting: true
-    )
-
-    static let analytics = NumbersTemplate(
-        type: .analytics,
-        name: "Analytics Report",
-        description: "Performance analytics with insights",
-        tableStyle: .analytics,
-        includeCharts: true,
-        includeFormatting: true
-    )
-}
-
-enum NumbersTemplateType: String, Codable {
-    case inventoryReport
-    case batchReport
-    case analytics
-    case custom
-}
-
 // MARK: - File Operations
+#if os(iOS)
 extension AppleNumbersService {
     func shareNumbersFile(_ fileURL: URL, from viewController: UIViewController) {
         let activityViewController = UIActivityViewController(
@@ -324,8 +272,8 @@ extension AppleNumbersService {
         // For iPad support
         if let popoverController = activityViewController.popoverPresentationController {
             popoverController.sourceView = viewController.view
-            popoverController.sourceRect = CGRect(x: viewController.viewBounds.midX,
-                                                y: viewController.viewBounds.midY,
+            popoverController.sourceRect = CGRect(x: viewController.view.bounds.midX,
+                                                y: viewController.view.bounds.midY,
                                                 width: 0, height: 0)
             popoverController.permittedArrowDirections = []
         }
@@ -335,7 +283,10 @@ extension AppleNumbersService {
 
     func openInNumbers(_ fileURL: URL) {
         // Open file in Numbers app
-        let numbersURL = URL(string: "numbers://")!
+        guard let numbersURL = URL(string: "numbers://") else {
+            print("Could not create Numbers URL")
+            return
+        }
         if UIApplication.shared.canOpenURL(numbersURL) {
             UIApplication.shared.open(numbersURL)
         } else {
@@ -343,7 +294,25 @@ extension AppleNumbersService {
             print("Numbers app is not available")
         }
     }
+}
+#elseif os(macOS)
+import AppKit
 
+extension AppleNumbersService {
+    func shareNumbersFile(_ fileURL: URL, from window: NSWindow?) {
+        let sharingServicePicker = NSSharingServicePicker(items: [fileURL])
+        if let contentView = window?.contentView {
+            sharingServicePicker.show(relativeTo: .zero, of: contentView, preferredEdge: .minY)
+        }
+    }
+
+    func openInNumbers(_ fileURL: URL) {
+        NSWorkspace.shared.open(fileURL)
+    }
+}
+#endif
+
+extension AppleNumbersService {
     func cleanupTempFiles() {
         let tempDirectory = FileManager.default.temporaryDirectory
 
@@ -389,3 +358,20 @@ extension AppleNumbersService {
         )
     }
 }
+
+#if os(iOS)
+extension AppleNumbersService {
+    func topViewController() -> UIViewController? {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
+            return nil
+        }
+        
+        var topController = rootViewController
+        while let presentedViewController = topController.presentedViewController {
+            topController = presentedViewController
+        }
+        return topController
+    }
+}
+#endif

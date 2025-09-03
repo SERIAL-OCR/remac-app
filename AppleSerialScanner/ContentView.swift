@@ -2,7 +2,8 @@
 //  ContentView.swift
 //  AppleSerialScanner
 //
-
+//  Created on Phase 2.2 - Multi-platform iOS/macOS Scanner
+//
 
 import SwiftUI
 
@@ -12,7 +13,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            SerialScannerView(viewModel: viewModel)
+            SerialScannerView(scannerViewModel: viewModel)
                 .tabItem {
                     Label("Scan", systemImage: "camera")
                 }

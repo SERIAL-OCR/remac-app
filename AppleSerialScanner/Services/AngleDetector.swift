@@ -1,7 +1,9 @@
 import Foundation
 import CoreImage
 import Vision
+#if os(iOS)
 import CoreMotion
+#endif
 
 /// Text orientation information for angle correction
 struct TextOrientation {
@@ -32,11 +34,17 @@ struct PerspectiveInfo {
 }
 
 /// Advanced angle detection and correction system
-class AngleDetector {
+class AngleDetector: ObservableObject {
+    // MARK: - Published Properties
+    @Published var currentAngle: Float = 0.0
+    @Published var isAngleOptimal: Bool = true
+    @Published var angleWarning: String = ""
 
     // MARK: - Properties
     private let context = CIContext()
+    #if os(iOS)
     private var motionManager: CMMotionManager?
+    #endif
     private var deviceOrientation: Float = 0.0
 
     // MARK: - Initialization
@@ -46,10 +54,13 @@ class AngleDetector {
     }
 
     deinit {
+        #if os(iOS)
         motionManager?.stopDeviceMotionUpdates()
+        #endif
     }
 
     private func setupMotionManager() {
+        #if os(iOS)
         motionManager = CMMotionManager()
         motionManager?.deviceMotionUpdateInterval = 1.0 / 30.0  // 30Hz updates
 
@@ -60,6 +71,7 @@ class AngleDetector {
             let attitude = motion.attitude
             self.deviceOrientation = Float(attitude.yaw * 180.0 / .pi)
         }
+        #endif
     }
 
     // MARK: - Text Orientation Detection
@@ -70,7 +82,6 @@ class AngleDetector {
 
         // Configure for accurate text detection
         request.reportCharacterBoxes = true
-        request.usesCPUOnly = false
 
         guard let cgImage = context.createCGImage(image, from: image.extent) else {
             return TextOrientation(confidence: 0.0)
@@ -98,16 +109,15 @@ class AngleDetector {
         var allBounds = CGRect.zero
 
         for observation in rectangles {
-            if let rectangle = observation as? VNDetectedObjectObservation {
-                let bounds = rectangle.boundingBox
+            // VNTextObservation is already the correct type, no need for conditional cast
+            let bounds = observation.boundingBox
 
-                // Calculate angle from rectangle orientation
-                let angle = calculateAngleFromRectangle(bounds)
-                angles.append(angle)
+            // Calculate angle from rectangle orientation
+            let angle = calculateAngleFromRectangle(bounds)
+            angles.append(angle)
 
-                // Expand overall bounds
-                allBounds = allBounds.union(bounds)
-            }
+            // Expand overall bounds
+            allBounds = allBounds.union(bounds)
         }
 
         guard !angles.isEmpty else {
@@ -236,11 +246,14 @@ class AngleDetector {
 
     /// Calculate stability score for angle correction
     func calculateStabilityScore(for orientation: TextOrientation) -> Float {
-        // Consider factors like confidence, text area, and device motion
-        let confidenceWeight = orientation.confidence
-        let areaWeight = Float(orientation.textBounds.width * orientation.textBounds.height)
-        let stabilityWeight = 0.8 // Would be calculated from motion data
-
-        return (confidenceWeight * 0.5) + (areaWeight * 0.3) + (stabilityWeight * 0.2)
+        let confidenceComponent = orientation.confidence * 0.5
+        
+        let areaComponent = Float(orientation.textBounds.width * orientation.textBounds.height) * 0.3
+        
+        // TODO: Replace with actual stability data from motion manager
+        let stabilityWeight = 0.8 
+        let stabilityComponent = stabilityWeight * 0.2
+        
+        return confidenceComponent + areaComponent + Float(stabilityComponent)
     }
 }

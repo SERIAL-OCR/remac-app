@@ -61,7 +61,10 @@ struct ExportView: View {
                         selectedSource: selectedSource,
                         selectedDeviceType: selectedDeviceType,
                         googleSheetsEnabled: googleSheetsEnabled,
-                        googleSpreadsheetId: googleSpreadsheetId
+                        googleSpreadsheetId: googleSpreadsheetId,
+                        showingExportResult: $showingExportResult,
+                        exportResultMessage: $exportResultMessage,
+                        exportedFiles: $exportedFiles
                     )
 
                     // Recent Exports
@@ -370,6 +373,9 @@ struct ExportActionsSection: View {
     let selectedDeviceType: String?
     let googleSheetsEnabled: Bool
     let googleSpreadsheetId: String
+    @Binding var showingExportResult: Bool
+    @Binding var exportResultMessage: String
+    @Binding var exportedFiles: [URL]
 
     var body: some View {
         VStack(spacing: 16) {
@@ -454,7 +460,7 @@ struct ExportActionsSection: View {
                     case .appleNumbers:
                         let fileURL = try await exportManager.exportToNumbers(
                             scanData: [], // Would need to fetch actual data
-                            template: NumbersTemplate.inventoryReport
+                            template: NumbersTemplate.standard
                         )
                         exportedFiles.append(fileURL)
                         exportResults.append("Numbers: \(fileURL.lastPathComponent)")
@@ -580,6 +586,7 @@ struct ExportTaskRow: View {
         case .inProgress: return .blue
         case .failed: return .red
         case .pending: return .gray
+        case .cancelled: return .orange
         }
     }
 }

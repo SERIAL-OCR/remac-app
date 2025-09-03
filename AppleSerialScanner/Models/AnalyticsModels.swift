@@ -198,18 +198,25 @@ struct SystemHealthMetrics: Codable {
     let appCrashes: Int
     let systemWarnings: Int
 
-    init() {
+    init(
+        batteryLevel: Float? = nil,
+        thermalState: String = "nominal",
+        networkConnectivity: String = "wifi",
+        storageAvailable: UInt64 = 1000000000,
+        appCrashes: Int = 0,
+        systemWarnings: Int = 0
+    ) {
         #if os(iOS)
         self.batteryLevel = UIDevice.current.batteryLevel
         #else
-        self.batteryLevel = nil
+        self.batteryLevel = batteryLevel
         #endif
 
-        self.thermalState = "nominal" // Would need to implement thermal state detection
-        self.networkConnectivity = "wifi" // Would need network detection
-        self.storageAvailable = 1000000000 // 1GB placeholder - would need actual detection
-        self.appCrashes = 0
-        self.systemWarnings = 0
+        self.thermalState = thermalState
+        self.networkConnectivity = networkConnectivity
+        self.storageAvailable = storageAvailable
+        self.appCrashes = appCrashes
+        self.systemWarnings = systemWarnings
     }
 }
 
@@ -233,86 +240,30 @@ struct DailyAnalyticsSummary: Identifiable, Codable {
     }
 }
 
-/// Weekly analytics trends
-struct WeeklyAnalyticsTrend: Identifiable, Codable {
-    let id: UUID
-    let weekStart: Date
-    let accuracyTrend: [Date: Double]
-    let performanceTrend: [Date: TimeInterval]
-    let usageTrend: [Date: Int]
-    let surfaceTypeDistribution: [String: Double]
-    let improvementAreas: [String]
-}
+// MARK: - References to standalone model files
+// These types are now defined in their own files:
+// - WeeklyAnalyticsTrend.swift
+// - AnalyticsDashboardData.swift
+// - PerformanceInsight.swift
+// - AnalyticsConfiguration.swift
 
-/// Analytics dashboard data
-struct AnalyticsDashboardData {
-    let todaySummary: DailyAnalyticsSummary
-    let weeklyTrend: WeeklyAnalyticsTrend
-    let recentSessions: [AnalyticsData]
-    let systemHealth: SystemHealthMetrics
-    let performanceInsights: [PerformanceInsight]
-}
+// MARK: - Analytics Event Models
 
-/// Performance insights and recommendations
-struct PerformanceInsight: Identifiable {
-    let id = UUID()
-    let type: InsightType
-    let title: String
-    let description: String
-    let impact: InsightImpact
-    let recommendation: String
-    let confidence: Double
-}
-
-enum InsightType {
-    case accuracy
-    case performance
-    case usability
-    case reliability
-}
-
-enum InsightImpact {
-    case low
-    case medium
-    case high
-    case critical
-}
-
-// MARK: - Analytics Service Models
-
-/// Analytics collection configuration
-struct AnalyticsConfiguration {
-    let enableDataCollection: Bool
-    let retentionPeriod: TimeInterval // in days
-    let enableRemoteSync: Bool
-    let anonymizeData: Bool
-    let enablePerformanceTracking: Bool
-    let enableErrorTracking: Bool
-
-    static let `default` = AnalyticsConfiguration(
-        enableDataCollection: true,
-        retentionPeriod: 90, // 90 days
-        enableRemoteSync: false,
-        anonymizeData: true,
-        enablePerformanceTracking: true,
-        enableErrorTracking: true
-    )
-}
-
-/// Analytics export formats
-enum AnalyticsExportFormat {
-    case json
-    case csv
-    case pdf
-    case excel
-}
-
-/// Analytics query filters
-struct AnalyticsFilters {
-    let dateRange: ClosedRange<Date>?
-    let deviceTypes: [String]?
-    let surfaceTypes: [String]?
-    let successStatus: Bool?
-    let minConfidence: Float?
-    let maxProcessingTime: TimeInterval?
+// Renamed to avoid conflict with the enum in AnalyticsService.swift
+struct AnalyticsEventRecord: Codable {
+    let timestamp: Date
+    let type: EventType
+    let duration: TimeInterval?
+    let metadata: [String: String]?
+    
+    enum EventType: String, Codable {
+        case scanStarted
+        case scanCompleted
+        case scanFailed
+        case settingsChanged
+        case exportStarted
+        case exportCompleted
+        case batchSessionStarted
+        case batchSessionCompleted
+    }
 }

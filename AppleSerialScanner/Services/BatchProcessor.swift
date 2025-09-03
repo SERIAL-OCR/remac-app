@@ -28,7 +28,7 @@ class BatchProcessor: ObservableObject {
 
     private func setupBindings() {
         // Observe scanner results for batch processing
-        scannerViewModel.$validationResult
+        scannerViewModel?.$validationResult
             .sink { [weak self] validationResult in
                 if let result = validationResult, self?.isProcessing == true {
                     self?.handleValidationResult(result)
@@ -84,7 +84,7 @@ class BatchProcessor: ObservableObject {
         saveCurrentSession()
 
         // Reset scanner to manual mode
-        scannerViewModel.stopScanning()
+        scannerViewModel?.stopScanning()
     }
 
     func resumeBatchSession() {
@@ -100,7 +100,7 @@ class BatchProcessor: ObservableObject {
         }
 
         // Restart scanning
-        scannerViewModel.startScanning()
+        scannerViewModel?.startScanning()
 
         // Continue with current item
         if let item = session.currentItem {
@@ -113,7 +113,10 @@ class BatchProcessor: ObservableObject {
 
     func cancelBatchSession() {
         guard var session = currentSession else { return }
-
+        
+        scannerViewModel?.stopScanning()
+        scannerViewModel?.guidanceText = "Batch session cancelled"
+        
         session.status = .cancelled
         session.completedAt = Date()
         currentSession = nil
@@ -121,10 +124,6 @@ class BatchProcessor: ObservableObject {
 
         cancelTimers()
         saveCurrentSession()
-
-        // Reset scanner
-        scannerViewModel.stopScanning()
-        scannerViewModel.updateGuidanceText("Batch session cancelled")
     }
 
     // MARK: - Item Processing
@@ -162,17 +161,17 @@ class BatchProcessor: ObservableObject {
 
     private func prepareForItem(_ item: BatchItem) {
         // Set accessory preset for this device type
-        scannerViewModel.accessoryPresetManager.selectedAccessoryType = item.deviceType
+        scannerViewModel?.accessoryPresetManager.selectedAccessoryType = item.deviceType
 
         // Apply preset settings
-        scannerViewModel.handleAccessoryPresetChange()
+        scannerViewModel?.handleAccessoryPresetChange()
 
         // Update guidance text
         let deviceName = item.deviceType.description
-        scannerViewModel.updateGuidanceText("Scanning \(deviceName) (Item \(currentSession?.currentIndex ?? 0 + 1) of \(currentSession?.items.count ?? 0))")
+        scannerViewModel?.guidanceText = "Scanning \(deviceName) (Item \(currentSession?.currentIndex ?? 0 + 1) of \(currentSession?.items.count ?? 0))"
 
         // Start scanning
-        scannerViewModel.startScanning()
+        scannerViewModel?.startScanning()
     }
 
     private func handleValidationResult(_ validationResult: ValidationResult) {
@@ -202,7 +201,7 @@ class BatchProcessor: ObservableObject {
                 scheduleAutoAdvance()
             } else {
                 // Wait for manual confirmation
-                scannerViewModel.updateGuidanceText("Serial captured! Tap 'Next' to continue or 'Complete' to finish.")
+                scannerViewModel?.guidanceText = "Serial captured! Tap 'Next' to continue or 'Complete' to finish."
             }
 
         case .BORDERLINE:
@@ -245,19 +244,19 @@ class BatchProcessor: ObservableObject {
         // Modify settings for retry (e.g., longer processing time, different preset)
         if item.retryCount == 1 {
             // First retry: extend processing window
-            scannerViewModel.updateGuidanceText("Retrying with extended processing time...")
+            scannerViewModel?.guidanceText = "Retrying with extended processing time..."
         } else if item.retryCount == 2 {
             // Second retry: try alternative preset
             let alternativePreset = getAlternativePreset(for: item.deviceType)
-            scannerViewModel.accessoryPresetManager.selectedAccessoryType = alternativePreset
-            scannerViewModel.handleAccessoryPresetChange()
-            scannerViewModel.updateGuidanceText("Retrying with alternative settings...")
+            scannerViewModel?.accessoryPresetManager.selectedAccessoryType = alternativePreset
+            scannerViewModel?.handleAccessoryPresetChange()
+            scannerViewModel?.guidanceText = "Retrying with alternative settings..."
         }
 
         // Restart scanning for this item
-        scannerViewModel.stopScanning()
+        scannerViewModel?.stopScanning()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.scannerViewModel.startScanning()
+            self.scannerViewModel?.startScanning()
         }
     }
 
@@ -327,7 +326,7 @@ class BatchProcessor: ObservableObject {
         }
 
         // Update UI
-        scannerViewModel.updateGuidanceText("Batch session completed! \(session.completedItems) of \(session.items.count) items scanned successfully.")
+        scannerViewModel?.guidanceText = "Batch session completed! \(session.completedItems) of \(session.items.count) items scanned successfully."
 
         // Generate completion statistics
         let statistics = generateStatistics(for: session)
@@ -361,7 +360,7 @@ class BatchProcessor: ObservableObject {
 
     private func handleSessionTimeout() {
         pauseBatchSession()
-        scannerViewModel.updateGuidanceText("Batch session paused due to inactivity. Resume when ready.")
+        scannerViewModel?.guidanceText = "Batch session paused due to inactivity. Resume when ready."
     }
 
     private func cancelTimers() {

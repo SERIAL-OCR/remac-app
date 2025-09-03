@@ -1,5 +1,4 @@
 import Foundation
-import SwiftUI
 import Combine
 
 /// Comprehensive analytics service for OCR performance tracking and insights
@@ -62,24 +61,31 @@ class AnalyticsService: ObservableObject {
     // MARK: - Data Processing
 
     /// Generate dashboard data from collected analytics
-    private func updateDashboardData() {
-        let todaySummary = generateTodaySummary()
-        let weeklyTrend = generateWeeklyTrend()
-        let recentSessions = getRecentSessions(limit: 10)
-        let systemHealth = getLatestSystemHealth()
-        let performanceInsights = generatePerformanceInsights()
+    func updateDashboardData() {
+        isLoading = true
+        
+        dataQueue.async { [weak self] in
+            guard let self = self else { return }
+            
+            let todaySummary = self.generateTodaySummary()
+            let weeklyTrend = self.generateWeeklyTrend()
+            let recentSessions = self.getRecentSessions(limit: 10)
+            let systemHealth = self.getLatestSystemHealth()
+            let performanceInsights = self.generatePerformanceInsights()
 
-        let dashboard = AnalyticsDashboardData(
-            todaySummary: todaySummary,
-            weeklyTrend: weeklyTrend,
-            recentSessions: recentSessions,
-            systemHealth: systemHealth,
-            performanceInsights: performanceInsights
-        )
+            let dashboard = AnalyticsDashboardData(
+                todaySummary: todaySummary,
+                weeklyTrend: weeklyTrend,
+                recentSessions: recentSessions,
+                systemHealth: systemHealth,
+                performanceInsights: performanceInsights
+            )
 
-        DispatchQueue.main.async { [weak self] in
-            self?.dashboardData = dashboard
-            self?.lastUpdate = Date()
+            DispatchQueue.main.async { [weak self] in
+                self?.dashboardData = dashboard
+                self?.lastUpdate = Date()
+                self?.isLoading = false
+            }
         }
     }
 
@@ -241,17 +247,18 @@ class AnalyticsService: ObservableObject {
         }
 
         // Surface type insights
-        if let metalCount = dashboard.todaySummary.topSurfaceTypes["metal"],
-           let totalScans = dashboard.todaySummary.totalSessions,
-           Double(metalCount) / Double(totalScans) > 0.8 {
-            insights.append(PerformanceInsight(
-                type: .usability,
-                title: "Metal Surface Dominance",
-                description: "Most scans are on metal surfaces. Ensure metal surface optimization is enabled.",
-                impact: .low,
-                recommendation: "Metal surface detection is working well for your use case.",
-                confidence: 0.7
-            ))
+        if let metalCount = dashboard.todaySummary.topSurfaceTypes["metal"] {
+            let totalScans = dashboard.todaySummary.totalSessions
+            if totalScans > 0 && Double(metalCount) / Double(totalScans) > 0.8 {
+                insights.append(PerformanceInsight(
+                    type: .usability,
+                    title: "Metal Surface Dominance",
+                    description: "Most scans are on metal surfaces. Ensure metal surface optimization is enabled.",
+                    impact: .low,
+                    recommendation: "Metal surface detection is working well for your use case.",
+                    confidence: 0.7
+                ))
+            }
         }
 
         return insights.sorted { $0.impact.rawValue > $1.impact.rawValue }
@@ -350,12 +357,15 @@ class AnalyticsService: ObservableObject {
     private func loadExistingData() {
         dataQueue.async { [weak self] in
             guard let self = self else { return }
-
-            // Load analytics data from storage
-            // In a real implementation, this would load from UserDefaults, CoreData, or files
-            // For now, we'll start with empty data
-            self.analyticsData = []
-
+            
+            if let data = UserDefaults.standard.data(forKey: "analyticsData") {
+                do {
+                    self.analyticsData = try JSONDecoder().decode([AnalyticsData].self, from: data)
+                } catch {
+                    print("Error loading analytics data: \(error)")
+                }
+            }
+            
             DispatchQueue.main.async {
                 self.updateDashboardData()
             }
@@ -363,9 +373,12 @@ class AnalyticsService: ObservableObject {
     }
 
     private func saveAnalyticsData() {
-        // Save analytics data to persistent storage
-        // In a real implementation, this would save to UserDefaults, CoreData, or files
-        // For now, this is a placeholder
+        do {
+            let data = try JSONEncoder().encode(analyticsData)
+            UserDefaults.standard.set(data, forKey: "analyticsData")
+        } catch {
+            print("Error saving analytics data: \(error)")
+        }
     }
 
     // MARK: - Periodic Updates
@@ -386,9 +399,18 @@ class AnalyticsService: ObservableObject {
 
     /// Export analytics data in specified format
     func exportAnalytics(format: AnalyticsExportFormat, filters: AnalyticsFilters? = nil) -> URL? {
-        // Implementation would export data in the specified format with optional filters
-        // Return temporary file URL
-        return nil
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let filename = "analytics_export.\(format.fileExtension)"
+        let fileURL = tempDirectory.appendingPathComponent(filename)
+
+        do {
+            let data = try JSONEncoder().encode(analyticsData)
+            try data.write(to: fileURL)
+            return fileURL
+        } catch {
+            print("Error exporting analytics data: \(error)")
+            return nil
+        }
     }
 
     /// Clear old analytics data based on retention policy

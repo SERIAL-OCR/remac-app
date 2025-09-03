@@ -10,7 +10,7 @@ struct HistoryView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 // Search and filter bar
                 HStack {
@@ -82,7 +82,7 @@ struct HistoryView: View {
             }
         }
         .sheet(isPresented: $showingExportSheet) {
-            ExportView(viewModel: viewModel)
+            ExportView()
         }
         .sheet(isPresented: $showingFilterSheet) {
             FilterView(viewModel: viewModel)
@@ -100,7 +100,7 @@ struct HistoryView: View {
             return viewModel.filteredHistory
         } else {
             return viewModel.filteredHistory.filter { scan in
-                scan.serial.localizedCaseInsensitiveContains(searchText)
+                scan.serialNumber.localizedCaseInsensitiveContains(searchText)
             }
         }
     }
@@ -113,14 +113,14 @@ struct StatsSummaryView: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack {
-                StatCard(title: "Total", value: "\(stats.total_scans)", color: .blue)
-                StatCard(title: "Success", value: "\(stats.successful_scans)", color: .green)
-                StatCard(title: "Failed", value: "\(stats.failed_scans)", color: .red)
+                StatCard(title: "Total", value: "\(stats.totalScans)", color: .blue)
+                StatCard(title: "Success", value: "\(stats.successfulScans)", color: .green)
+                StatCard(title: "Failed", value: "\(stats.failedScans)", color: .red)
             }
             
             HStack {
                 StatCard(title: "Success Rate", value: "\(Int(stats.successRate * 100))%", color: .orange)
-                StatCard(title: "Avg Confidence", value: "\(Int(stats.average_confidence * 100))%", color: .purple)
+                StatCard(title: "Avg Confidence", value: "\(Int(stats.averageConfidence * 100))%", color: .purple)
             }
         }
         .padding(.vertical, 8)
@@ -156,7 +156,7 @@ struct HistoryRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(scan.serial)
+                Text(scan.serialNumber)
                     .font(.headline)
                     .fontWeight(.medium)
                 
@@ -166,20 +166,17 @@ struct HistoryRowView: View {
                     Circle()
                         .fill(statusColor)
                         .frame(width: 8, height: 8)
-                    Text(scan.confidencePercentage)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
             }
             
             HStack {
-                Text(scan.formattedDate)
+                Text(formattedDate)
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
                 Spacer()
                 
-                Text(scan.source.uppercased())
+                Text(deviceType.uppercased())
                     .font(.caption)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -187,7 +184,7 @@ struct HistoryRowView: View {
                     .cornerRadius(4)
             }
             
-            if let notes = scan.notes, !notes.isEmpty {
+            if let notes = scan.deviceModel, !notes.isEmpty {
                 Text(notes)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -198,12 +195,23 @@ struct HistoryRowView: View {
     }
     
     private var statusColor: Color {
-        switch scan.statusColor {
-        case "green": return .green
-        case "orange": return .orange
-        case "red": return .red
+        switch scan.status {
+        case "Valid": return .green
+        case "Pending": return .orange
+        case "Invalid": return .red
         default: return .gray
         }
+    }
+    
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: scan.timestamp)
+    }
+    
+    private var deviceType: String {
+        return scan.deviceModel ?? "Unknown"
     }
 }
 
@@ -241,20 +249,21 @@ class HistoryViewModel: ObservableObject {
     var filteredHistory: [ScanHistory] {
         var filtered = scanHistory
         
-        // Filter by source
+        // Filter by status instead of source (since source doesn't exist in the model)
         if selectedSource != "all" {
-            filtered = filtered.filter { $0.source == selectedSource }
+            // We'll use deviceModel as a substitute for source, since that's what we have
+            filtered = filtered.filter { $0.deviceModel?.lowercased() == selectedSource.lowercased() }
         }
         
         // Filter by status
         if selectedStatus != "all" {
             switch selectedStatus {
             case "success":
-                filtered = filtered.filter { $0.validation_passed && $0.confidence_acceptable }
+                filtered = filtered.filter { $0.status == "Valid" }
             case "borderline":
-                filtered = filtered.filter { $0.validation_passed && !$0.confidence_acceptable }
+                filtered = filtered.filter { $0.status == "Pending" }
             case "failed":
-                filtered = filtered.filter { !$0.validation_passed }
+                filtered = filtered.filter { $0.status == "Invalid" }
             default:
                 break
             }
@@ -276,7 +285,11 @@ class HistoryViewModel: ObservableObject {
         do {
             // The backend returns a nested response with recent_scans array
             // We'll need to decode this properly
-            let url = URL(string: "\(backendService.baseURL)/history?limit=100&offset=0")!
+            guard let url = URL(string: "\(backendService.baseURL)/history?limit=100&offset=0") else {
+                self.error = "Invalid URL"
+                self.isLoading = false
+                return
+            }
             var request = URLRequest(url: url)
             if !backendService.apiKey.isEmpty {
                 request.setValue("Bearer \(backendService.apiKey)", forHTTPHeaderField: "Authorization")
@@ -319,95 +332,9 @@ class HistoryViewModel: ObservableObject {
     }
     
     var availableSources: [String] {
-        let sources = Set(scanHistory.map { $0.source })
+        // Extract unique device models for filtering, using non-nil values only
+        let sources = Set(scanHistory.compactMap { $0.deviceModel })
         return ["all"] + Array(sources).sorted()
-    }
-}
-
-// MARK: - Export View
-struct ExportView: View {
-    @ObservedObject var viewModel: HistoryViewModel
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedFormat = "csv"
-    @State private var isExporting = false
-    @State private var exportData: Data?
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                Text("Export Scan History")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Format:")
-                        .font(.headline)
-                    
-                    Picker("Format", selection: $selectedFormat) {
-                        Text("CSV").tag("csv")
-                        Text("Excel").tag("xlsx")
-                        Text("JSON").tag("json")
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                }
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Records to export: \(viewModel.filteredHistory.count)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Button(action: exportData) {
-                    HStack {
-                        if isExporting {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        } else {
-                            Image(systemName: "square.and.arrow.up")
-                        }
-                        Text(isExporting ? "Exporting..." : "Export")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                }
-                .disabled(isExporting)
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Export")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .sheet(item: $exportData) { data in
-            ShareSheet(items: [data])
-        }
-    }
-    
-    private func exportData() {
-        isExporting = true
-        
-        Task {
-            if let data = await viewModel.exportHistory(format: selectedFormat) {
-                await MainActor.run {
-                    exportData = data
-                    isExporting = false
-                }
-            } else {
-                await MainActor.run {
-                    isExporting = false
-                }
-            }
-        }
     }
 }
 
@@ -461,21 +388,7 @@ struct FilterView: View {
     }
 }
 
-// MARK: - Share Sheet
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
 
-// MARK: - Extensions
-extension Data: Identifiable {
-    public var id: String { UUID().uuidString }
-}
 
 struct HistoryView_Previews: PreviewProvider {
     static var previews: some View {

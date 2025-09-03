@@ -11,9 +11,9 @@ class GoogleSheetsService: NSObject, ObservableObject {
 
     private var accessToken: String?
     private var refreshToken: String?
-    private let clientId = "YOUR_GOOGLE_CLIENT_ID" // Replace with actual client ID
-    private let clientSecret = "YOUR_GOOGLE_CLIENT_SECRET" // Replace with actual client secret
-    private let redirectURI = "com.googleusercontent.apps.YOUR_APP_BUNDLE_ID:/oauth2redirect"
+    private let clientId = "63927663525-8jlece0f653422e4ispkj4n3v8i0cgul.apps.googleusercontent.com"
+    private let clientSecret = "YOUR_CLIENT_SECRET" // Replace with actual client secret
+    private let redirectURI = "com.googleusercontent.apps.YOUR_REVERSED_CLIENT_ID:/oauth2redirect" // Replace with your reversed client ID
 
     // Google Sheets API endpoints
     private let baseURL = "https://sheets.googleapis.com/v4/spreadsheets"
@@ -24,26 +24,24 @@ class GoogleSheetsService: NSObject, ObservableObject {
     func authenticate() {
         isAuthenticating = true
 
-        let authURL = buildAuthURL()
+        guard let authURL = buildAuthURL() else { return }
 
-        // For iOS, use ASWebAuthenticationSession
-        #if os(iOS)
-        let session = ASWebAuthenticationSession(url: authURL, callbackURLScheme: "com.googleusercontent.apps.YOUR_APP_BUNDLE_ID") { [weak self] callbackURL, error in
+        // For iOS and macOS, use ASWebAuthenticationSession
+        #if os(iOS) || os(macOS)
+        let session = ASWebAuthenticationSession(url: authURL, callbackURLScheme: "com.googleusercontent.apps.YOUR_REVERSED_CLIENT_ID") { [weak self] callbackURL, error in
             self?.handleAuthCallback(callbackURL: callbackURL, error: error)
         }
 
+        #if os(iOS)
         session.presentationContextProvider = self
+        #endif
         session.start()
-        #else
-        // For macOS, you might need a different approach
-        // This could involve opening the URL in the default browser
-        NSWorkspace.shared.open(authURL)
         #endif
     }
 
-    private func buildAuthURL() -> URL {
-        var components = URLComponents(string: authURL)!
-        components.queryItems = [
+    private func buildAuthURL() -> URL? {
+        var components = URLComponents(string: authURL)
+        components?.queryItems = [
             URLQueryItem(name: "client_id", value: clientId),
             URLQueryItem(name: "redirect_uri", value: redirectURI),
             URLQueryItem(name: "scope", value: "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email"),
@@ -51,7 +49,7 @@ class GoogleSheetsService: NSObject, ObservableObject {
             URLQueryItem(name: "access_type", value: "offline"),
             URLQueryItem(name: "prompt", value: "consent")
         ]
-        return components.url!
+        return components?.url
     }
 
     private func handleAuthCallback(callbackURL: URL?, error: Error?) {
@@ -74,7 +72,8 @@ class GoogleSheetsService: NSObject, ObservableObject {
     }
 
     private func exchangeCodeForToken(code: String) {
-        var request = URLRequest(url: URL(string: tokenURL)!)
+        guard let url = URL(string: tokenURL) else { return }
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
@@ -108,9 +107,8 @@ class GoogleSheetsService: NSObject, ObservableObject {
     }
 
     private func getUserInfo() {
-        guard let accessToken = accessToken else { return }
-
-        var request = URLRequest(url: URL(string: "https://www.googleapis.com/oauth2/v2/userinfo")!)
+        guard let accessToken = accessToken, let url = URL(string: "https://www.googleapis.com/oauth2/v2/userinfo") else { return }
+        var request = URLRequest(url: url)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
 
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
@@ -134,7 +132,7 @@ class GoogleSheetsService: NSObject, ObservableObject {
             properties: SpreadsheetProperties(title: title)
         )
 
-        let url = URL(string: baseURL)!
+        guard let url = URL(string: baseURL) else { throw GoogleSheetsError.invalidResponse }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
@@ -160,7 +158,7 @@ class GoogleSheetsService: NSObject, ObservableObject {
             values: values
         )
 
-        let url = URL(string: "\(baseURL)/\(spreadsheetId)/values/\(range)?valueInputOption=RAW")!
+        guard let url = URL(string: "\(baseURL)/\(spreadsheetId)/values/\(range)?valueInputOption=RAW") else { throw GoogleSheetsError.invalidResponse }
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
@@ -177,7 +175,7 @@ class GoogleSheetsService: NSObject, ObservableObject {
             throw GoogleSheetsError.notAuthenticated
         }
 
-        let url = URL(string: "\(baseURL)/\(spreadsheetId)")!
+        guard let url = URL(string: "\(baseURL)/\(spreadsheetId)") else { throw GoogleSheetsError.invalidResponse }
         var request = URLRequest(url: url)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
 
@@ -198,7 +196,7 @@ class GoogleSheetsService: NSObject, ObservableObject {
             emailAddress: email
         )
 
-        let url = URL(string: "\(baseURL)/\(spreadsheetId)/permissions")!
+        guard let url = URL(string: "\(baseURL)/\(spreadsheetId)/permissions") else { throw GoogleSheetsError.invalidResponse }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
@@ -256,7 +254,8 @@ class GoogleSheetsService: NSObject, ObservableObject {
             throw GoogleSheetsError.noRefreshToken
         }
 
-        var request = URLRequest(url: URL(string: tokenURL)!)
+        guard let url = URL(string: tokenURL) else { throw GoogleSheetsError.invalidResponse }
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
@@ -377,15 +376,13 @@ extension GoogleSheetsService {
     }
 
     func exportScanHistory(title: String, scanHistory: [ScanHistory]) async throws -> String {
-        let headers = [["Device Type", "Serial Number", "Confidence", "Source", "Timestamp", "Validation"]]
+        let headers = [["Device Model", "Serial Number", "Status", "Timestamp"]]
         let data = scanHistory.map { scan in
             [
-                scan.deviceType,
-                scan.serial,
-                String(format: "%.1f%%", scan.confidence * 100),
-                scan.source,
+                scan.deviceModel ?? "Unknown",
+                scan.serialNumber,
+                scan.status,
                 scan.timestamp.formatted(),
-                scan.validationPassed ? "Valid" : "Invalid"
             ]
         }
 

@@ -42,12 +42,25 @@ class BackendService: ObservableObject {
     }
     
     // MARK: - Fetch History
-    func fetchHistory(limit: Int = 50, offset: Int = 0) async throws -> [ScanHistory] {
+    func fetchHistory(limit: Int = 50, offset: Int = 0, dateFrom: Date? = nil, dateTo: Date? = nil, source: String? = nil, deviceType: String? = nil) async throws -> [ScanHistory] {
         var components = URLComponents(string: "\(baseURL)/history")!
         components.queryItems = [
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "offset", value: "\(offset)")
         ]
+
+        if let dateFrom = dateFrom {
+            components.queryItems?.append(URLQueryItem(name: "dateFrom", value: dateFrom.ISO8601Format()))
+        }
+        if let dateTo = dateTo {
+            components.queryItems?.append(URLQueryItem(name: "dateTo", value: dateTo.ISO8601Format()))
+        }
+        if let source = source {
+            components.queryItems?.append(URLQueryItem(name: "source", value: source))
+        }
+        if let deviceType = deviceType {
+            components.queryItems?.append(URLQueryItem(name: "deviceType", value: deviceType))
+        }
 
         guard let url = components.url else {
             throw BackendError.invalidURL
@@ -166,6 +179,25 @@ class BackendService: ObservableObject {
             }
             return false
         }
+    }
+
+    func healthCheck() async throws -> Bool {
+        guard let url = URL(string: "\(baseURL)/config") else {
+            throw BackendError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        if !apiKey.isEmpty {
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let (_, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw BackendError.invalidResponse
+        }
+        
+        return httpResponse.statusCode == 200
     }
 }
 

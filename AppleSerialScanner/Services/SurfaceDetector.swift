@@ -1,5 +1,5 @@
 import Foundation
-import CoreImage
+@preconcurrency import CoreImage
 import Vision
 
 /// Surface types that can be detected for optimized OCR settings
@@ -142,10 +142,11 @@ class SurfaceDetector {
 
     /// Detect surface type from a camera frame
     func detectSurface(in image: CIImage, completion: @escaping (SurfaceDetectionResult) -> Void) {
+        let imageCopy = image // Copy to avoid capturing non-Sendable type
         detectionQueue.async { [weak self] in
             guard let self = self else { return }
 
-            let result = self.analyzeSurface(in: image)
+            let result = self.analyzeSurface(in: imageCopy)
             DispatchQueue.main.async {
                 completion(result)
             }
@@ -153,6 +154,7 @@ class SurfaceDetector {
     }
 
     /// Synchronous surface analysis for immediate results
+    @MainActor
     func detectSurfaceSync(in image: CIImage) -> SurfaceDetectionResult {
         return analyzeSurface(in: image)
     }
@@ -283,9 +285,11 @@ class SurfaceDetector {
             return 0.5
         }
 
-        let r = Float(pixelData[0]) / 255.0
-        let g = Float(pixelData[1]) / 255.0
-        let b = Float(pixelData[2]) / 255.0
+        // Bind the raw pointer to a typed buffer for subscripting
+        let buffer = pixelData.bindMemory(to: UInt8.self, capacity: 4)
+        let r = Float(buffer[0]) / 255.0
+        let g = Float(buffer[1]) / 255.0
+        let b = Float(buffer[2]) / 255.0
 
         // Calculate luminance using standard formula
         return 0.299 * r + 0.587 * g + 0.114 * b
