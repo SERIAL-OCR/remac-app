@@ -69,14 +69,16 @@ class CameraManager: NSObject, ObservableObject {
     
     func startSession() {
         guard !session.isRunning else { return }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.session.startRunning()
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.session.startRunning()
         }
     }
     
     func stopSession() {
         guard session.isRunning else { return }
-        session.stopRunning()
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.session.stopRunning()
+        }
     }
     
     func getPreviewLayer() -> AVCaptureVideoPreviewLayer? {

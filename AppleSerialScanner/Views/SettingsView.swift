@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var baseURL = UserDefaults.standard.string(forKey: "backend_base_url") ?? "http://localhost:8000"
-    @State private var apiKey = UserDefaults.standard.string(forKey: "backend_api_key") ?? ""
+    @State private var baseURL = UserDefaults.standard.string(forKey: "backend_base_url") ?? "http://10.36.181.235:8000"
+    @State private var apiKey = UserDefaults.standard.string(forKey: "backend_api_key") ?? "phase2-pilot-key-2024"
     @State private var selectedPreset = UserDefaults.standard.string(forKey: "selected_preset") ?? "default"
     @State private var showingAlert = false
     @State private var alertMessage = ""
@@ -40,7 +40,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Base URL")
                         Spacer()
-                        TextField("http://localhost:8000", text: $baseURL)
+                        TextField("http://10.36.181.235:8000", text: $baseURL)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .frame(width: 200)
                     }
@@ -204,13 +204,13 @@ struct SettingsView: View {
     }
     
     private func loadSettings() {
-        baseURL = UserDefaults.standard.string(forKey: "backend_base_url") ?? "http://localhost:8000"
+        baseURL = UserDefaults.standard.string(forKey: "backend_base_url") ?? "http://10.36.181.235:8000"
         apiKey = UserDefaults.standard.string(forKey: "backend_api_key") ?? ""
         selectedPreset = UserDefaults.standard.string(forKey: "selected_preset") ?? "default"
     }
     
     private func resetToDefaults() {
-        baseURL = "http://localhost:8000"
+        baseURL = "http://10.36.181.235:8000"
         apiKey = ""
         selectedPreset = "default"
         

@@ -12,15 +12,31 @@ struct SerialScannerView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Camera preview with overlay
-                #if os(iOS)
-                CameraPreviewView(scannerViewModel: scannerViewModel)
-                    .ignoresSafeArea()
-                #else
-                MacCameraPreviewView(scannerViewModel: scannerViewModel)
-                    .ignoresSafeArea()
-                #endif
-                
+                if let previewLayer = scannerViewModel.previewLayer {
+                    // Camera preview with overlay
+                    CameraPreviewView(previewLayer: previewLayer)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.black)
+                        .ignoresSafeArea()
+                } else {
+                    // Fallback UI if camera is not available
+                    VStack {
+                        Spacer()
+                        Image(systemName: "camera.slash")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 80, height: 80)
+                            .foregroundColor(.gray)
+                        Text("Camera not available")
+                            .font(.title2)
+                            .foregroundColor(.gray)
+                        Text("Check camera permissions or try restarting the app.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .background(Color.black.ignoresSafeArea())
+                }
                 // ROI overlay and guidance
                 ScannerOverlayView(scannerViewModel: scannerViewModel)
                 
@@ -91,59 +107,6 @@ struct SerialScannerView: View {
         }
     }
 }
-
-// MARK: - Camera Preview View
-struct CameraPreviewView: UIViewRepresentable {
-    @ObservedObject var scannerViewModel: SerialScannerViewModel
-    
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.backgroundColor = .black
-        
-        // Add camera preview layer
-        if let previewLayer = scannerViewModel.previewLayer {
-            previewLayer.frame = view.bounds
-            previewLayer.videoGravity = .resizeAspectFill
-            view.layer.addSublayer(previewLayer)
-        }
-        
-        return view
-    }
-    
-    func updateUIView(_ uiView: UIView, context: Context) {
-        if let previewLayer = scannerViewModel.previewLayer {
-            previewLayer.frame = uiView.bounds
-        }
-    }
-}
-
-#if os(macOS)
-// MARK: - macOS Camera Preview View
-struct MacCameraPreviewView: NSViewRepresentable {
-    @ObservedObject var scannerViewModel: SerialScannerViewModel
-    
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.black.cgColor
-        
-        // Add camera preview layer
-        if let previewLayer = scannerViewModel.previewLayer {
-            previewLayer.frame = view.bounds
-            previewLayer.videoGravity = .resizeAspectFill
-            view.layer?.addSublayer(previewLayer)
-        }
-        
-        return view
-    }
-    
-    func updateNSView(_ nsView: NSView, context: Context) {
-        if let previewLayer = scannerViewModel.previewLayer {
-            previewLayer.frame = nsView.bounds
-        }
-    }
-}
-#endif
 
 // MARK: - Scanner Overlay View
 struct ScannerOverlayView: View {

@@ -1,9 +1,12 @@
 import SwiftUI
 import Vision
 import VisionKit
-import AVFoundation
+@preconcurrency import AVFoundation
 import Combine
 @preconcurrency import CoreImage
+import UIKit
+
+// MARK: - SerialScannerViewModel
 
 @MainActor
 class SerialScannerViewModel: NSObject, ObservableObject {
@@ -18,6 +21,11 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     @Published var validationResult: ValidationResult?
     @Published var showValidationAlert = false
     @Published var validationAlertMessage = ""
+    @Published var showingPresetSelector = false
+    @Published var recognizedText = ""
+    
+    // MARK: - Performance Optimization
+    private let backgroundProcessingManager = BackgroundProcessingManager()
     
     // MARK: - Auto Capture Properties
     private var isAutoCapturing = false
@@ -43,12 +51,12 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     private var angleCorrectionEvents: [AngleCorrectionEvent] = []
 
     // MARK: - Surface Detection Properties
-    @Published var detectedSurfaceType: SurfaceType = .unknown
+    @Published var detectedSurfaceType: SurfaceType = SurfaceType.unknown
     @Published var surfaceDetectionConfidence: Float = 0.0
     @Published var isSurfaceDetectionEnabled = true
 
     // MARK: - Lighting Detection Properties
-    @Published var detectedLightingCondition: LightingCondition = .unknown
+    @Published var detectedLightingCondition: LightingCondition = LightingCondition.unknown
     @Published var lightingDetectionConfidence: Float = 0.0
     @Published var isLightingDetectionEnabled = true
 
@@ -59,7 +67,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     
     // MARK: - Camera Properties
     var previewLayer: AVCaptureVideoPreviewLayer?
-    private var captureSession: AVCaptureSession?
+    var captureSession: AVCaptureSession?
     private var videoOutput = AVCaptureVideoDataOutput()
     private var photoOutput = AVCapturePhotoOutput()
 
@@ -244,7 +252,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     }
     
     // MARK: - Vision Properties
-    private var textRecognitionRequest: VNRecognizeTextRequest?
+    var textRecognitionRequest: VNRecognizeTextRequest?
     private var processingQueue = DispatchQueue(label: "com.appleserial.processing", qos: .userInitiated)
     private var roiRectNormalized: CGRect = CGRect(x: 0.2, y: 0.2, width: 0.6, height: 0.6)
     
@@ -287,7 +295,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         applyAccessoryPresetSettings()
 
         // Reset surface detection state when preset changes
-        detectedSurfaceType = .unknown
+        detectedSurfaceType = SurfaceType.unknown
         surfaceDetectionConfidence = 0.0
 
         // Update guidance text
@@ -366,6 +374,11 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         if let allowlist = settings.allowlist {
             textRecognitionRequest?.customWords = Array(allowlist).map { String($0) }
         }
+        
+        // Optimize text recognition specifically for Apple serial numbers
+        if let request = textRecognitionRequest {
+            SerialTextRecognitionOptimizer.optimizeForSerialNumbers(request, isIPad: UIDevice.current.userInterfaceIdiom == .pad)
+        }
     }
 
     // MARK: - Accessory Preset Settings
@@ -401,17 +414,25 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     
     // MARK: - Camera Setup
     private func setupCamera() {
+        print("[Camera] Starting camera setup...")
         captureSession = AVCaptureSession()
         captureSession?.sessionPreset = .high
         
-        guard let captureSession = captureSession else { return }
+        guard let captureSession = captureSession else {
+            print("[Camera] Failed to create AVCaptureSession")
+            return
+        }
         
         #if os(iOS)
+        let authStatus = AVCaptureDevice.authorizationStatus(for: .video)
+        print("[Camera] Authorization status: \(authStatus.rawValue)")
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+            print("[Camera] No back camera available")
             return
         }
         #else
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .unspecified) else {
+            print("[Camera] No camera available (macOS)")
             return
         }
         #endif
@@ -420,24 +441,49 @@ class SerialScannerViewModel: NSObject, ObservableObject {
             let input = try AVCaptureDeviceInput(device: camera)
             if captureSession.canAddInput(input) {
                 captureSession.addInput(input)
+                print("[Camera] Added camera input")
+            } else {
+                print("[Camera] Cannot add camera input")
             }
             
             videoOutput.setSampleBufferDelegate(self, queue: processingQueue)
+            CameraConfigurator.optimizeVideoOutput(videoOutput)
             if captureSession.canAddOutput(videoOutput) {
                 captureSession.addOutput(videoOutput)
+                print("[Camera] Added video output")
+            } else {
+                print("[Camera] Cannot add video output")
             }
             
             photoOutput = AVCapturePhotoOutput()
             if captureSession.canAddOutput(photoOutput) {
                 captureSession.addOutput(photoOutput)
+                print("[Camera] Added photo output")
+            } else {
+                print("[Camera] Cannot add photo output")
             }
             
-            // Setup preview layer
             previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
             previewLayer?.videoGravity = .resizeAspectFill
+            if previewLayer != nil {
+                print("[Camera] Preview layer created")
+            } else {
+                print("[Camera] Failed to create preview layer")
+            }
             
+            CameraConfigurator.configureCameraForOptimalScanning(captureSession: captureSession, device: camera)
+            print("[Camera] Camera configured for optimal scanning")
+            
+            if !captureSession.isRunning {
+                let session = captureSession
+                DispatchQueue.global(qos: .userInitiated).async {
+                    print("[Camera] Starting capture session...")
+                    session.startRunning()
+                    print("[Camera] Capture session started: \(session.isRunning)")
+                }
+            }
         } catch {
-            print("Camera setup error: \(error)")
+            print("[Camera] Camera setup error: \(error)")
         }
     }
     
@@ -454,16 +500,19 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         updateGuidanceText(accessoryPresetManager.getGuidanceText())
 
         // Reset detection states
-        detectedSurfaceType = .unknown
+        detectedSurfaceType = SurfaceType.unknown
         surfaceDetectionConfidence = 0.0
-        detectedLightingCondition = .unknown
+        detectedLightingCondition = LightingCondition.unknown
         lightingDetectionConfidence = 0.0
         detectedTextOrientation = nil
         angleCorrectionApplied = false
 
+        let session = self.captureSession
         Task { [weak self] in
             await MainActor.run {
-                self?.captureSession?.startRunning()
+                DispatchQueue.global(qos: .userInitiated).async {
+                    session?.startRunning()
+                }
             }
         }
     }
@@ -477,9 +526,12 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         // Reset scanning state
         isProcessing = false
 
+        let session = self.captureSession
         Task { [weak self] in
             await MainActor.run {
-                self?.captureSession?.stopRunning()
+                DispatchQueue.global(qos: .userInitiated).async {
+                    session?.stopRunning()
+                }
             }
         }
     }
@@ -517,16 +569,36 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     }
     
     // MARK: - Auto Capture
-    private func startAutoCapture() {
+    func startAutoCapture() {
         isAutoCapturing = true
         processingStartTime = Date()
         frameResults.removeAll()
         processedFrames = 0
         bestConfidence = 0.0
+        recognizedText = ""
 
         // Reset surface detection for new scan
-        detectedSurfaceType = .unknown
+        detectedSurfaceType = SurfaceType.unknown
         surfaceDetectionConfidence = 0.0
+        
+        // Use precomputed iPad-specific settings
+        #if os(iOS)
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            // For iPad, use a rectangular ROI that's wider than tall (optimized for serial numbers)
+            let iPadRoiWidth: CGFloat = 0.8  // Wide ROI for iPad
+            let iPadRoiHeight: CGFloat = 0.2 // Shorter height (4:1 aspect ratio)
+            roiRectNormalized = CGRect(
+                x: (1.0 - iPadRoiWidth) / 2.0,
+                y: (1.0 - iPadRoiHeight) / 2.0,
+                width: iPadRoiWidth,
+                height: iPadRoiHeight
+            )
+            
+            // Apply iPad-specific vision settings
+            textRecognitionRequest?.regionOfInterest = roiRectNormalized
+            textRecognitionRequest?.minimumTextHeight = 0.03 // Better for iPad's higher resolution
+        }
+        #endif
 
         updateGuidanceText(getPresetGuidanceText())
     }
@@ -553,38 +625,39 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         var bestConfidenceInFrame: Float = 0.0
 
         for observation in observations {
-            guard let topCandidate = observation.topCandidates(1).first else { continue }
-
-            let text = topCandidate.string.uppercased()
-            let confidence = topCandidate.confidence
-
-            if isValidAppleSerialFormat(text) {
-                let frameResult = FrameResult(
-                    text: text,
-                    confidence: confidence,
-                    timestamp: Date()
-                )
-                frameResults.append(frameResult)
-
-                if confidence > bestConfidence {
-                    bestConfidence = confidence
+            for candidate in observation.topCandidates(3) {
+                let rawText = candidate.string.uppercased()
+                let rawConfidence = candidate.confidence
+                let (processedText, adjustedConfidence) = SerialTextRecognitionOptimizer.processRecognizedSerialText(rawText, confidence: rawConfidence)
+                
+                if adjustedConfidence > bestConfidenceInFrame {
+                    bestConfidenceInFrame = adjustedConfidence
+                    DispatchQueue.main.async { [weak self] in
+                        self?.recognizedText = processedText
+                    }
                 }
+                
+                if isValidAppleSerialFormat(processedText) {
+                    frameResults.append(FrameResult(
+                        text: processedText,
+                        confidence: adjustedConfidence,
+                        timestamp: Date()
+                    ))
 
-                if confidence > bestConfidenceInFrame {
-                    bestConfidenceInFrame = confidence
-                }
+                    if adjustedConfidence > bestConfidence {
+                        bestConfidence = adjustedConfidence
+                    }
 
-                // Early stop if we have high confidence
-                if confidence >= 0.9 {
-                    let processingTime = Date().timeIntervalSince(processingStartTime)
-                    recordFrameProcessing(processingTime: processingTime, confidence: confidence)
-                    stopAutoCapture()
-                    return
+                    if adjustedConfidence >= 0.95 {
+                        let processingTime = Date().timeIntervalSince(processingStartTime)
+                        recordFrameProcessing(processingTime: processingTime, confidence: adjustedConfidence)
+                        stopAutoCapture()
+                        return
+                    }
                 }
             }
         }
 
-        // Record frame processing analytics
         let processingTime = Date().timeIntervalSince(processingStartTime)
         recordFrameProcessing(processingTime: processingTime, confidence: bestConfidenceInFrame)
     }
@@ -668,17 +741,33 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     private func currentCGImageOrientation() -> CGImagePropertyOrientation {
         if let connection = videoOutput.connection(with: .video) {
             #if os(iOS)
-            switch connection.videoOrientation {
-            case .portrait:
-                return .right
-            case .portraitUpsideDown:
-                return .left
-            case .landscapeRight:
-                return .down
-            case .landscapeLeft:
-                return .up
-            @unknown default:
-                break
+            if #available(iOS 17.0, *) {
+                let angle = connection.videoRotationAngle
+                switch angle {
+                case 0:
+                    return .right  // Portrait
+                case 90:
+                    return .up     // Landscape Left
+                case 180:
+                    return .left   // Portrait Upside Down
+                case 270:
+                    return .down   // Landscape Right
+                default:
+                    return .right  // Default to portrait
+                }
+            } else {
+                switch connection.videoOrientation {
+                case .portrait:
+                    return .right
+                case .portraitUpsideDown:
+                    return .left
+                case .landscapeRight:
+                    return .down
+                case .landscapeLeft:
+                    return .up
+                @unknown default:
+                    return .right  // Default to portrait
+                }
             }
             #endif
         }
@@ -693,8 +782,10 @@ class SerialScannerViewModel: NSObject, ObservableObject {
             return .up
         case .landscapeRight:
             return .down
-        default:
-            return .right
+        case .faceUp, .faceDown, .unknown:
+            return .right  // Default to portrait for unknown orientations
+        @unknown default:
+            return .right  // Future-proof for any new orientations
         }
         #else
         return .right
@@ -703,7 +794,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     
     // MARK: - Surface Detection
     private func detectSurface(in image: CIImage) {
-        surfaceDetector.detectSurface(in: image) { [weak self] result in
+        surfaceDetector.detectSurface(in: image) { [weak self] (result: SurfaceDetectionResult) in
             guard let self = self else { return }
 
             // Update detected surface type and confidence
@@ -725,7 +816,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     }
 
     private func detectSurfaceAsync(in image: CIImage) {
-        surfaceDetector.detectSurface(in: image) { [weak self] result in
+        surfaceDetector.detectSurface(in: image) { [weak self] (result: SurfaceDetectionResult) in
             DispatchQueue.main.async {
                 guard let self = self else { return }
 
@@ -842,8 +933,10 @@ class SerialScannerViewModel: NSObject, ObservableObject {
                 guidance += "\n💡 Low light detected - increase lighting or enable flash."
             case .mixed:
                 guidance += "\n💡 Mixed lighting - try to reduce strong shadows or reflections."
-            default:
-                break
+            case .unknown:
+                break // No additional guidance for unknown condition
+            @unknown default:
+                guidance += "\n💡 Check lighting conditions and adjust as needed."
             }
         }
 
@@ -870,7 +963,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     func toggleSurfaceDetection() {
         isSurfaceDetectionEnabled.toggle()
         if !isSurfaceDetectionEnabled {
-            detectedSurfaceType = .unknown
+            detectedSurfaceType = SurfaceType.unknown
             surfaceDetectionConfidence = 0.0
         }
     }
@@ -878,7 +971,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     func toggleLightingDetection() {
         isLightingDetectionEnabled.toggle()
         if !isLightingDetectionEnabled {
-            detectedLightingCondition = .unknown
+            detectedLightingCondition = LightingCondition.unknown
             lightingDetectionConfidence = 0.0
         }
     }
@@ -923,5 +1016,3 @@ struct FrameResult {
     let confidence: Float
     let timestamp: Date
 }
-
-// Delegate methods moved to DelegateExtensions.swift (nonisolated implementations)

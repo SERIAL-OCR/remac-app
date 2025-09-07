@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  AppleSerialScanner
-//
-//  Created on Phase 2.2 - Multi-platform iOS/macOS Scanner
-//
-
 import SwiftUI
 
 struct ContentView: View {
@@ -13,7 +6,8 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            SerialScannerView(scannerViewModel: viewModel)
+            // Use the device-aware scanner view that automatically selects the best implementation
+            DeviceTypeAwareScannerView(viewModel: viewModel)
                 .tabItem {
                     Label("Scan", systemImage: "camera")
                 }
@@ -49,15 +43,5 @@ struct ContentView: View {
                 }
                 .tag(5)
         }
-        .onAppear {
-            // Configure appearance for both iOS and macOS
-            #if os(iOS)
-            UITabBar.appearance().backgroundColor = UIColor.systemBackground
-            #endif
-        }
     }
-}
-
-#Preview {
-    ContentView()
 }
