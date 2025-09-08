@@ -37,11 +37,23 @@ struct ContentView: View {
                 }
                 .tag(4)
 
+            PerformanceMetricsView(scannerViewModel: viewModel)
+                .tabItem {
+                    Label("Performance", systemImage: "speedometer")
+                }
+                .tag(5)
+
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(5)
+                .tag(6)
+        }
+        .onAppear {
+            // Initialize Phase 4 optimizations when app starts
+            viewModel.powerManagementService.powerDelegate = viewModel
+            viewModel.startPerformanceMonitoring()
+            viewModel.optimizeForCurrentConditions()
         }
     }
 }

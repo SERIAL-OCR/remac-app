@@ -3,7 +3,7 @@ import Vision
 import VisionKit
 @preconcurrency import AVFoundation
 import Combine
-@preconcurrency import CoreImage
+@preconcurrency  import CoreImage
 import UIKit
 
 // MARK: - SerialScannerViewModel
@@ -20,12 +20,15 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     @Published var isFlashOn = false
     @Published var validationResult: ValidationResult?
     @Published var showValidationAlert = false
-    @Published var validationAlertMessage = ""
+    @Published var validationAlertMessage: String = ""
     @Published var showingPresetSelector = false
     @Published var recognizedText = ""
+    @Published var isPowerSavingModeActive = false
+    @Published var isScanning = false
     
     // MARK: - Performance Optimization
-    private let backgroundProcessingManager = BackgroundProcessingManager()
+    private(set) var backgroundProcessingManager = BackgroundProcessingManager()
+    let powerManagementService = PowerManagementService()
     
     // MARK: - Auto Capture Properties
     private var isAutoCapturing = false
@@ -283,6 +286,9 @@ class SerialScannerViewModel: NSObject, ObservableObject {
 
         // Observe accessory preset changes
         setupAccessoryPresetObserver()
+        
+        // Phase 4: Set up power management
+        setupPowerManagement()
     }
 
     private func setupAccessoryPresetObserver() {
@@ -353,6 +359,107 @@ class SerialScannerViewModel: NSObject, ObservableObject {
             try handler.perform([textRecognitionRequest])
         } catch {
             print("Vision processing error: \(error)")
+        }
+    }
+    
+    // MARK: - Phase 4: Optimized Frame Processing
+    func processFrameOptimized(_ image: CGImage) async {
+        guard isAutoCapturing,
+              let processingStartTime = processingStartTime,
+              Date().timeIntervalSince(processingStartTime) < processingWindow,
+              processedFrames < maxFrames else {
+            if isAutoCapturing {
+                stopAutoCapture()
+            }
+            return
+        }
+
+        processedFrames += 1
+        let frameStartTime = Date()
+
+        // Convert CGImage to CIImage for surface detection
+        let ciImage = CIImage(cgImage: image)
+
+        // Phase 4: Run heavy analytics operations in background only when needed
+        if processedFrames <= 3 && !backgroundProcessingManager.isUnderHeavyLoad {
+            // Surface detection - background processing
+            if isSurfaceDetectionEnabled {
+                backgroundProcessingManager.processSurfaceDetection(image: ciImage) { [weak self] result in
+                    Task { @MainActor in
+                        self?.handleSurfaceDetectionResult(result)
+                    }
+                }
+            }
+            
+            // Lighting analysis - background processing
+            if isLightingDetectionEnabled {
+                backgroundProcessingManager.processLightingAnalysis(image: ciImage) { [weak self] condition, confidence in
+                    Task { @MainActor in
+                        self?.handleLightingAnalysisResult(condition: condition, confidence: confidence)
+                    }
+                }
+            }
+            
+            // Angle detection - background processing (only if needed)
+            if isAngleDetectionEnabled {
+                Task.detached(priority: .utility) { [weak self] in
+                    await self?.detectAngleAsyncOptimized(in: ciImage)
+                }
+            }
+        }
+
+        // Apply surface-adaptive OCR settings (lightweight operation)
+        updateOCRSettingsForSurface()
+
+        // Phase 4: Prioritize OCR processing with background handling
+        guard let textRecognitionRequest = textRecognitionRequest else { return }
+        
+        textRecognitionRequest.regionOfInterest = roiRectNormalized
+        let handler = VNImageRequestHandler(cgImage: image, orientation: currentCGImageOrientation(), options: [:])
+
+        // Use background processing manager for OCR
+        backgroundProcessingManager.processTextRecognition(handler: handler, request: textRecognitionRequest) { [weak self] error in
+            if let error = error {
+                print("Vision processing error: \(error)")
+            }
+            
+            // Record analytics for performance monitoring (background task)
+            Task { @MainActor in
+                let processingTime = Date().timeIntervalSince(frameStartTime)
+                self?.recordFrameProcessing(processingTime: processingTime, confidence: self?.bestConfidence ?? 0.0)
+            }
+        }
+    }
+    
+    // MARK: - Phase 4: Optimized Helper Methods
+    
+    private func handleSurfaceDetectionResult(_ result: BackgroundSurfaceDetectionResult) {
+        // Update UI only if significant change
+        let newSurfaceType = SurfaceType(rawValue: result.surfaceType.rawValue) ?? .unknown
+        if newSurfaceType != detectedSurfaceType || abs(result.confidence - surfaceDetectionConfidence) > 0.1 {
+            detectedSurfaceType = newSurfaceType
+            surfaceDetectionConfidence = result.confidence
+        }
+    }
+    
+    private func handleLightingAnalysisResult(condition: BackgroundLightingCondition, confidence: Float) {
+        // Update UI only if significant change
+        let newLightingCondition = LightingCondition(rawValue: condition.rawValue) ?? .unknown
+        if newLightingCondition != detectedLightingCondition || abs(confidence - lightingDetectionConfidence) > 0.1 {
+            detectedLightingCondition = newLightingCondition
+            lightingDetectionConfidence = confidence
+        }
+    }
+    
+    private func detectAngleAsyncOptimized(in image: CIImage) async {
+        // Only perform angle detection if not already processing and if there's a significant change expected
+        guard !angleCorrectionApplied else { return }
+        
+        let orientation = angleDetector.detectTextOrientation(in: image)
+        if self.detectedTextOrientation != orientation {
+            self.detectedTextOrientation = orientation
+            // Fix: Pass angle and confidence instead of orientation
+            self.recordAngleCorrection(angle: Double(orientation.rotationAngle), confidence: orientation.confidence)
         }
     }
     
@@ -494,6 +601,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
 
         // Reset scanning state
         isProcessing = true
+        isScanning = true
         processedFrames = 0
         bestConfidence = 0.0
         guidanceText = "Scanning for serial number..."
@@ -512,6 +620,10 @@ class SerialScannerViewModel: NSObject, ObservableObject {
             await MainActor.run {
                 DispatchQueue.global(qos: .userInitiated).async {
                     session?.startRunning()
+                    // Start auto capture after session is running
+                    Task { @MainActor in
+                        self?.startAutoCapture()
+                    }
                 }
             }
         }
@@ -677,7 +789,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
             submitSerial(validationResult.serial, validationResult.confidence)
         case .BORDERLINE:
             self.validationResult = validationResult
-            validationAlertMessage = "Borderline confidence (\(Int(validationResult.confidence * 100))%). Submit anyway?"
+            validationAlertMessage = "Borderline confidence (\(Int(validationResult.confidence * 100)))%. Submit anyway?"
             showValidationAlert = true
         case .REJECT:
             updateGuidanceText("Invalid serial detected. Try again.")
@@ -1015,4 +1127,70 @@ struct FrameResult {
     let text: String
     let confidence: Float
     let timestamp: Date
+}
+
+// MARK: - Phase 4: Power Management Setup
+extension SerialScannerViewModel {
+    private func setupPowerManagement() {
+        powerManagementService.powerDelegate = self
+        print("[PowerManagement] Power management initialized")
+    }
+    
+    // MARK: - Phase 4: Power-Optimized Scanning Methods
+    func startAutoCapturePowerOptimized() {
+        // Get power-optimized settings
+        let processingSettings = powerManagementService.getOptimizedProcessingSettings()
+        let cameraSettings = powerManagementService.getOptimizedCameraSettings()
+        
+        // Apply power optimizations
+        applyCameraOptimizations(cameraSettings)
+        applyProcessingOptimizations(processingSettings)
+        
+        // Start power management session
+        powerManagementService.startScanningSession()
+        
+        // Start regular auto capture with optimized settings
+        startAutoCapture()
+        
+        print("[PowerManagement] Started power-optimized scanning session")
+    }
+    
+    private func applyCameraOptimizations(_ settings: PowerOptimizedCameraSettings) {
+        guard let captureSession = captureSession else { return }
+        
+        // Apply session preset based on power state
+        if captureSession.canSetSessionPreset(settings.sessionPreset) {
+            captureSession.sessionPreset = settings.sessionPreset
+        }
+        
+        // Configure flash based on power settings
+        if !settings.enableTorch && isFlashOn {
+            toggleFlash() // Turn off flash to save power
+        }
+        
+        print("[PowerManagement] Applied camera optimizations - Preset: \(settings.sessionPreset), Torch: \(settings.enableTorch)")
+    }
+    
+    private func applyProcessingOptimizations(_ settings: PowerOptimizedProcessingSettings) {
+        // Adjust feature flags based on power settings
+        if !settings.enableSurfaceDetection && isSurfaceDetectionEnabled {
+            isSurfaceDetectionEnabled = false
+            print("[PowerManagement] Disabled surface detection for power saving")
+        }
+        
+        if !settings.enableLightingAnalysis && isLightingDetectionEnabled {
+            isLightingDetectionEnabled = false
+            print("[PowerManagement] Disabled lighting analysis for power saving")
+        }
+        
+        if !settings.enableAngleDetection && isAngleDetectionEnabled {
+            isAngleDetectionEnabled = false
+            print("[PowerManagement] Disabled angle detection for power saving")
+        }
+        
+        // Apply OCR accuracy level
+        textRecognitionRequest?.recognitionLevel = settings.ocrAccuracyLevel
+        
+        print("[PowerManagement] Applied processing optimizations - Features reduced for power saving")
+    }
 }

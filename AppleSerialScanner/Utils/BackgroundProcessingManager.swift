@@ -181,6 +181,105 @@ class BackgroundProcessingManager {
     var isUnderHeavyLoad: Bool {
         return pendingTaskCount > 5
     }
+    
+    // MARK: - Performance Metrics
+    private var framesProcessed: Int = 0
+    private var framesDropped: Int = 0
+    private var processingTimeSum: Double = 0
+    private var processingTimeCount: Int = 0
+    private var lastProcessingStartTime: Date?
+    private var throttlingEnabled: Bool = false
+    private var maxProcessingRate: Int = 15 // Default 15 fps
+    private var fastModeEnabled: Bool = false
+    
+    /// Returns a dictionary with performance statistics
+    func getPerformanceStats() -> [String: Any] {
+        processingLock.lock()
+        defer { processingLock.unlock() }
+        
+        let avgProcessingTime = processingTimeCount > 0 ? processingTimeSum / Double(processingTimeCount) : 0
+        
+        return [
+            "framesProcessed": framesProcessed,
+            "framesDropped": framesDropped,
+            "avgProcessingTime": avgProcessingTime,
+            "queueDepth": pendingTasks,
+            "throttlingEnabled": throttlingEnabled,
+            "fastModeEnabled": fastModeEnabled
+        ]
+    }
+    
+    /// Updates frame processing metrics
+    func recordFrameProcessed(processingTime: TimeInterval) {
+        processingLock.lock()
+        defer { processingLock.unlock() }
+        
+        framesProcessed += 1
+        processingTimeSum += processingTime * 1000 // Convert to milliseconds
+        processingTimeCount += 1
+        
+        // Keep a rolling average of the last 100 frames
+        if processingTimeCount > 100 {
+            processingTimeSum = processingTimeSum * 0.9
+            processingTimeCount = 90
+        }
+    }
+    
+    /// Records a dropped frame
+    func recordFrameDropped() {
+        processingLock.lock()
+        framesDropped += 1
+        processingLock.unlock()
+    }
+    
+    /// Enables processing throttling for power saving
+    func enableThrottling() {
+        processingLock.lock()
+        throttlingEnabled = true
+        processingLock.unlock()
+    }
+    
+    /// Disables processing throttling
+    func disableThrottling() {
+        processingLock.lock()
+        throttlingEnabled = false
+        processingLock.unlock()
+    }
+    
+    /// Sets the maximum processing rate in frames per second
+    func setMaxProcessingRate(_ fps: Int) {
+        processingLock.lock()
+        maxProcessingRate = fps
+        processingLock.unlock()
+    }
+    
+    /// Enables fast mode (less accurate but more performant)
+    func enableFastMode() {
+        processingLock.lock()
+        fastModeEnabled = true
+        processingLock.unlock()
+    }
+    
+    /// Disables fast mode (more accurate but less performant)
+    func disableFastMode() {
+        processingLock.lock()
+        fastModeEnabled = false
+        processingLock.unlock()
+    }
+    
+    /// Pauses processing (used when scanning times out)
+    func pauseProcessing() {
+        processingLock.lock()
+        isProcessingFrame = true // Block new frames from being processed
+        processingLock.unlock()
+    }
+    
+    /// Resumes processing after a pause
+    func resumeProcessing() {
+        processingLock.lock()
+        isProcessingFrame = false // Allow new frames to be processed
+        processingLock.unlock()
+    }
 }
 
 // MARK: - Helper Structs

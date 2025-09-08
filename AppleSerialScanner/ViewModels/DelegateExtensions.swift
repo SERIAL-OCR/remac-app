@@ -17,7 +17,12 @@ extension SerialScannerViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
         guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return }
 
         Task { @MainActor in
-            self.processFrame(cgImage)
+            // Use BackgroundProcessingManager to throttle frame processing
+            guard self.backgroundProcessingManager.shouldProcessFrame() else { return }
+            
+            self.backgroundProcessingManager.beginFrameProcessing()
+            await self.processFrameOptimized(cgImage)
+            self.backgroundProcessingManager.endFrameProcessing()
         }
     }
 }

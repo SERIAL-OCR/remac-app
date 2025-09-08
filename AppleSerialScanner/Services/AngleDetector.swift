@@ -6,7 +6,7 @@ import CoreMotion
 #endif
 
 /// Text orientation information for angle correction
-struct TextOrientation {
+struct TextOrientation: Equatable {
     let rotationAngle: Float      // Rotation angle in degrees (-180 to 180)
     let skewAngle: Float         // Skew correction angle in degrees
     let confidence: Float        // Detection confidence (0.0 to 1.0)
@@ -251,7 +251,7 @@ class AngleDetector: ObservableObject {
         let areaComponent = Float(orientation.textBounds.width * orientation.textBounds.height) * 0.3
         
         // TODO: Replace with actual stability data from motion manager
-        let stabilityWeight = 0.8 
+        let stabilityWeight = 0.8
         let stabilityComponent = stabilityWeight * 0.2
         
         return confidenceComponent + areaComponent + Float(stabilityComponent)

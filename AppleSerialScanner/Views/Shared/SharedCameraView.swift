@@ -55,16 +55,15 @@ class CameraContainerView: UIView {
             print("[CameraView] First valid bounds detected: \(bounds)")
         }
         
+        // Skip update if frame hasn't changed to prevent recursive updates
+        if layer.frame == bounds {
+            return
+        }
+        
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         layer.frame = bounds
         CATransaction.commit()
-        
-        // Force immediate visual update
-        DispatchQueue.main.async {
-            self.setNeedsLayout()
-            self.layoutIfNeeded()
-        }
         
         print("[CameraView] Updated previewLayer.frame to: \(layer.frame)")
     }
@@ -143,6 +142,11 @@ class CameraContainerNSView: NSView {
         if !hasValidBounds {
             hasValidBounds = true
             print("[CameraView] First valid bounds detected: \(bounds)")
+        }
+        
+        // Skip update if frame hasn't changed to prevent recursive updates
+        if layer.frame == bounds {
+            return
         }
         
         CATransaction.begin()
