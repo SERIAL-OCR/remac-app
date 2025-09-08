@@ -56,14 +56,14 @@ class GoogleSheetsService: NSObject, ObservableObject {
         isAuthenticating = false
 
         if let error = error {
-            print("Authentication error: \(error)")
+            AppLogger.network.error("Google auth error: \(error.localizedDescription)")
             return
         }
 
         guard let callbackURL = callbackURL,
               let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
               let code = components.queryItems?.first(where: { $0.name == "code" })?.value else {
-            print("No authorization code received")
+            AppLogger.network.error("Google auth: no authorization code received")
             return
         }
 
@@ -90,7 +90,7 @@ class GoogleSheetsService: NSObject, ObservableObject {
 
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             if let error = error {
-                print("Token exchange error: \(error)")
+                AppLogger.network.error("Google token exchange error: \(error.localizedDescription)")
                 return
             }
 

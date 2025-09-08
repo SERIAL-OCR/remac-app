@@ -91,7 +91,7 @@ class IPadSerialScannerOptimizer {
             
             device.unlockForConfiguration()
         } catch {
-            print("Error configuring camera for iPad: \(error.localizedDescription)")
+            AppLogger.camera.error("Error configuring camera for iPad: \(error.localizedDescription)")
         }
     }
 }

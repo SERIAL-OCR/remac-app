@@ -6,9 +6,7 @@ struct ClientConfig: Codable {
     let timeout: TimeInterval
     
     static let `default`: ClientConfig = {
-        guard let url = URL(string: "https://api.example.com") else {
-            fatalError("Invalid base URL in ClientConfig")
-        }
-        return ClientConfig(apiKey: "YOUR_API_KEY", baseURL: url, timeout: 30.0)
+        let url = URL(string: "https://api.example.com") ?? URL(string: "https://localhost")!
+        return ClientConfig(apiKey: "", baseURL: url, timeout: 30.0)
     }()
 }

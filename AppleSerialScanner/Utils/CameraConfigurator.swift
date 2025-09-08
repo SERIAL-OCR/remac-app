@@ -59,7 +59,7 @@ class CameraConfigurator {
             
             device.unlockForConfiguration()
         } catch {
-            print("Error configuring camera: \(error.localizedDescription)")
+            AppLogger.camera.error("Error configuring camera: \(error.localizedDescription)")
         }
     }
     

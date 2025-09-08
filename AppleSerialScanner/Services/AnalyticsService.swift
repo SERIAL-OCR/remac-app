@@ -362,7 +362,7 @@ class AnalyticsService: ObservableObject {
                 do {
                     self.analyticsData = try JSONDecoder().decode([AnalyticsData].self, from: data)
                 } catch {
-                    print("Error loading analytics data: \(error)")
+                    AppLogger.storage.error("Error loading analytics data: \(error.localizedDescription)")
                 }
             }
             
@@ -377,7 +377,7 @@ class AnalyticsService: ObservableObject {
             let data = try JSONEncoder().encode(analyticsData)
             UserDefaults.standard.set(data, forKey: "analyticsData")
         } catch {
-            print("Error saving analytics data: \(error)")
+            AppLogger.storage.error("Error saving analytics data: \(error.localizedDescription)")
         }
     }
 
@@ -408,7 +408,7 @@ class AnalyticsService: ObservableObject {
             try data.write(to: fileURL)
             return fileURL
         } catch {
-            print("Error exporting analytics data: \(error)")
+            AppLogger.storage.error("Error exporting analytics data: \(error.localizedDescription)")
             return nil
         }
     }

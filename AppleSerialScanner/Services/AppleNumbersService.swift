@@ -284,14 +284,14 @@ extension AppleNumbersService {
     func openInNumbers(_ fileURL: URL) {
         // Open file in Numbers app
         guard let numbersURL = URL(string: "numbers://") else {
-            print("Could not create Numbers URL")
+            AppLogger.ui.error("Could not create Numbers URL")
             return
         }
         if UIApplication.shared.canOpenURL(numbersURL) {
             UIApplication.shared.open(numbersURL)
         } else {
             // Fallback: show alert that Numbers is not installed
-            print("Numbers app is not available")
+            AppLogger.ui.error("Numbers app is not available")
         }
     }
 }
@@ -331,7 +331,7 @@ extension AppleNumbersService {
                 }
             }
         } catch {
-            print("Error cleaning up temp files: \(error)")
+            AppLogger.storage.error("Error cleaning up temp files: \(error.localizedDescription)")
         }
     }
 }

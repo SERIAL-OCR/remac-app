@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var baseURL = UserDefaults.standard.string(forKey: "backend_base_url") ?? "http://10.36.181.235:8000"
-    @State private var apiKey = UserDefaults.standard.string(forKey: "backend_api_key") ?? "phase2-pilot-key-2024"
+    @State private var baseURL = UserDefaults.standard.string(forKey: "backend_base_url") ?? "https://api.example.com"
+    @State private var apiKey = (try? SecureStore.get(forKey: "backend_api_key")) ?? UserDefaults.standard.string(forKey: "backend_api_key") ?? ""
     @State private var selectedPreset = UserDefaults.standard.string(forKey: "selected_preset") ?? "default"
     @State private var showingAlert = false
     @State private var alertMessage = ""
@@ -40,7 +40,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Base URL")
                         Spacer()
-                        TextField("http://10.36.181.235:8000", text: $baseURL)
+                        TextField("https://your-backend.example.com", text: $baseURL)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .frame(width: 200)
                     }
@@ -190,9 +190,23 @@ struct SettingsView: View {
     }
     
     private func saveSettings() {
+        guard let url = URL(string: baseURL), ["https", "http"].contains(url.scheme?.lowercased()) else {
+            alertMessage = "Please enter a valid URL (https:// preferred)."
+            showingAlert = true
+            return
+        }
+
         UserDefaults.standard.set(baseURL, forKey: "backend_base_url")
-        UserDefaults.standard.set(apiKey, forKey: "backend_api_key")
+        do { try SecureStore.set(apiKey, forKey: "backend_api_key") } catch {
+            // Fallback to UserDefaults if Keychain fails
+            UserDefaults.standard.set(apiKey, forKey: "backend_api_key")
+            AppLogger.storage.error("Failed to store API key securely: \(error.localizedDescription)")
+        }
         UserDefaults.standard.set(selectedPreset, forKey: "selected_preset")
+
+        // Immediately update backend service instance
+        backendService.baseURL = baseURL
+        backendService.apiKey = apiKey
         
         alertMessage = "Settings saved successfully"
         showingAlert = true
@@ -204,13 +218,13 @@ struct SettingsView: View {
     }
     
     private func loadSettings() {
-        baseURL = UserDefaults.standard.string(forKey: "backend_base_url") ?? "http://10.36.181.235:8000"
-        apiKey = UserDefaults.standard.string(forKey: "backend_api_key") ?? ""
+        baseURL = UserDefaults.standard.string(forKey: "backend_base_url") ?? "https://api.example.com"
+        apiKey = (try? SecureStore.get(forKey: "backend_api_key")) ?? UserDefaults.standard.string(forKey: "backend_api_key") ?? ""
         selectedPreset = UserDefaults.standard.string(forKey: "selected_preset") ?? "default"
     }
     
     private func resetToDefaults() {
-        baseURL = "http://10.36.181.235:8000"
+        baseURL = "https://api.example.com"
         apiKey = ""
         selectedPreset = "default"
         

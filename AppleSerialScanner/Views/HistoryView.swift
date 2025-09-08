@@ -318,7 +318,7 @@ class HistoryViewModel: ObservableObject {
             systemStats = try await backendService.fetchSystemStats()
         } catch {
             // Don't show error for stats, just log it
-            print("Failed to load system stats: \(error)")
+            AppLogger.network.error("Failed to load system stats: \(error.localizedDescription)")
         }
     }
     
