@@ -15,7 +15,7 @@ extension SerialScannerViewModel: PowerManagementDelegate {
             self?.backgroundProcessingManager.enableThrottling()
             // Reduce frame processing rate in power saving mode
             self?.backgroundProcessingManager.setMaxProcessingRate(5) // 5 fps instead of 15
-            print("Entered power saving mode - reduced processing rate to 5fps")
+            AppLogger.power.debug("Entered power saving mode - reduced processing rate to 5fps")
         }
     }
     
@@ -25,7 +25,7 @@ extension SerialScannerViewModel: PowerManagementDelegate {
             self?.backgroundProcessingManager.disableThrottling()
             // Restore normal frame processing rate
             self?.backgroundProcessingManager.setMaxProcessingRate(15)
-            print("Exited power saving mode - restored processing rate to 15fps")
+            AppLogger.power.debug("Exited power saving mode - restored processing rate to 15fps")
         }
     }
     
@@ -33,7 +33,7 @@ extension SerialScannerViewModel: PowerManagementDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.isScanning = false
             self?.backgroundProcessingManager.pauseProcessing()
-            print("Scanning timeout - paused processing due to inactivity")
+            AppLogger.power.debug("Scanning timeout - paused processing due to inactivity")
         }
     }
 }
@@ -50,12 +50,7 @@ extension SerialScannerViewModel {
     
     private func logPerformanceMetrics() {
         let stats = backgroundProcessingManager.getPerformanceStats()
-        print("   Performance Stats:")
-        print("   Frames processed: \(stats["framesProcessed"] ?? 0)")
-        print("   Frames dropped: \(stats["framesDropped"] ?? 0)")
-        print("   Average processing time: \(stats["avgProcessingTime"] ?? 0)ms")
-        print("   Queue depth: \(stats["queueDepth"] ?? 0)")
-        print("   Power saving: \(isPowerSavingModeActive ? "ON" : "OFF")")
+        AppLogger.power.debug("Performance Stats - framesProcessed=\(stats["framesProcessed"] ?? 0), framesDropped=\(stats["framesDropped"] ?? 0), avgProcessingMs=\(stats["avgProcessingTime"] ?? 0), queueDepth=\(stats["queueDepth"] ?? 0), powerSaving=\(isPowerSavingModeActive ? "ON" : "OFF")")
     }
     
     private func adaptProcessingBasedOnPerformance() {
@@ -67,11 +62,11 @@ extension SerialScannerViewModel {
         if avgProcessingTime > 100 || queueDepth > 5 {
             // Reduce processing complexity
             backgroundProcessingManager.enableFastMode()
-            print(" Enabled fast mode due to performance issues")
+            AppLogger.power.debug("Enabled fast mode due to performance issues")
         } else if avgProcessingTime < 50 && queueDepth < 2 {
             // We can afford higher quality processing
             backgroundProcessingManager.disableFastMode()
-            print("Disabled fast mode - performance is good")
+            AppLogger.power.debug("Disabled fast mode - performance is good")
         }
     }
     

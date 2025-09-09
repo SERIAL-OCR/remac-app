@@ -358,7 +358,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         do {
             try handler.perform([textRecognitionRequest])
         } catch {
-            print("Vision processing error: \(error)")
+            AppLogger.vision.error("Vision processing error: \(error.localizedDescription)")
         }
     }
     
@@ -420,7 +420,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         // Use background processing manager for OCR
         backgroundProcessingManager.processTextRecognition(handler: handler, request: textRecognitionRequest) { [weak self] error in
             if let error = error {
-                print("Vision processing error: \(error)")
+                AppLogger.vision.error("Vision processing error: \(error.localizedDescription)")
             }
             
             // Record analytics for performance monitoring (background task)
@@ -521,25 +521,25 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     
     // MARK: - Camera Setup
     private func setupCamera() {
-        print("[Camera] Starting camera setup...")
+        AppLogger.camera.debug("Starting camera setup…")
         captureSession = AVCaptureSession()
         captureSession?.sessionPreset = .high
         
         guard let captureSession = captureSession else {
-            print("[Camera] Failed to create AVCaptureSession")
+            AppLogger.camera.error("Failed to create AVCaptureSession")
             return
         }
         
         #if os(iOS)
         let authStatus = AVCaptureDevice.authorizationStatus(for: .video)
-        print("[Camera] Authorization status: \(authStatus.rawValue)")
+        AppLogger.camera.debug("Authorization status: \(authStatus.rawValue)")
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-            print("[Camera] No back camera available")
+            AppLogger.camera.error("No back camera available")
             return
         }
         #else
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .unspecified) else {
-            print("[Camera] No camera available (macOS)")
+            AppLogger.camera.error("No camera available (macOS)")
             return
         }
         #endif
@@ -548,49 +548,49 @@ class SerialScannerViewModel: NSObject, ObservableObject {
             let input = try AVCaptureDeviceInput(device: camera)
             if captureSession.canAddInput(input) {
                 captureSession.addInput(input)
-                print("[Camera] Added camera input")
+                AppLogger.camera.debug("Added camera input")
             } else {
-                print("[Camera] Cannot add camera input")
+                AppLogger.camera.error("Cannot add camera input")
             }
             
             videoOutput.setSampleBufferDelegate(self, queue: processingQueue)
             CameraConfigurator.optimizeVideoOutput(videoOutput)
             if captureSession.canAddOutput(videoOutput) {
                 captureSession.addOutput(videoOutput)
-                print("[Camera] Added video output")
+                AppLogger.camera.debug("Added video output")
             } else {
-                print("[Camera] Cannot add video output")
+                AppLogger.camera.error("Cannot add video output")
             }
             
             photoOutput = AVCapturePhotoOutput()
             if captureSession.canAddOutput(photoOutput) {
                 captureSession.addOutput(photoOutput)
-                print("[Camera] Added photo output")
+                AppLogger.camera.debug("Added photo output")
             } else {
-                print("[Camera] Cannot add photo output")
+                AppLogger.camera.error("Cannot add photo output")
             }
             
             previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
             previewLayer?.videoGravity = .resizeAspectFill
             if previewLayer != nil {
-                print("[Camera] Preview layer created")
+                AppLogger.camera.debug("Preview layer created")
             } else {
-                print("[Camera] Failed to create preview layer")
+                AppLogger.camera.error("Failed to create preview layer")
             }
             
             CameraConfigurator.configureCameraForOptimalScanning(captureSession: captureSession, device: camera)
-            print("[Camera] Camera configured for optimal scanning")
+            AppLogger.camera.debug("Camera configured for optimal scanning")
             
             if !captureSession.isRunning {
                 let session = captureSession
                 DispatchQueue.global(qos: .userInitiated).async {
-                    print("[Camera] Starting capture session...")
+                    AppLogger.camera.debug("Starting capture session…")
                     session.startRunning()
-                    print("[Camera] Capture session started: \(session.isRunning)")
+                    AppLogger.camera.debug("Capture session started: \(session.isRunning)")
                 }
             }
         } catch {
-            print("[Camera] Camera setup error: \(error)")
+            AppLogger.camera.error("Camera setup error: \(error.localizedDescription)")
         }
     }
     
@@ -673,7 +673,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
             }
             device.unlockForConfiguration()
         } catch {
-            print("Flash toggle error: \(error)")
+            AppLogger.camera.error("Flash toggle error: \(error.localizedDescription)")
         }
         #else
         isFlashOn = false
@@ -729,7 +729,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         let processingStartTime = Date()
 
         guard let observations = request.results as? [VNRecognizedTextObservation], error == nil else {
-            print("Text recognition error: \(error?.localizedDescription ?? "Unknown error")")
+            AppLogger.vision.error("Text recognition error: \(error?.localizedDescription ?? "Unknown error")")
             recordFrameProcessing(processingTime: Date().timeIntervalSince(processingStartTime), confidence: 0.0)
             return
         }
@@ -921,9 +921,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
 
             // Update guidance text with surface info
             self.updateGuidanceTextWithSurfaceInfo()
-
-            // Log surface detection for debugging
-            print("Surface detected: \(result.surfaceType.description) (confidence: \(Int(result.confidence * 100))%)")
+            AppLogger.vision.debug("Surface detected: \(result.surfaceType.description) (confidence: \(Int(result.confidence * 100))%)")
         }
     }
 
@@ -938,9 +936,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
 
                 // Update guidance text with surface info
                 self.updateGuidanceTextWithSurfaceInfo()
-
-                // Log surface detection for debugging
-                print("Surface detected: \(result.surfaceType.description) (confidence: \(Int(result.confidence * 100))%)")
+                AppLogger.vision.debug("Surface detected: \(result.surfaceType.description) (confidence: \(Int(result.confidence * 100))%)")
             }
         }
     }
@@ -954,7 +950,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         detectedLightingCondition = lightingCondition
         lightingDetectionConfidence = illuminationProfile.averageBrightness
         updateGuidanceTextWithLightingInfo()
-        print("Lighting detected: \(lightingCondition.description) (brightness: \(Int(illuminationProfile.averageBrightness * 100))%)")
+        AppLogger.vision.debug("Lighting detected: \(lightingCondition.description) (brightness: \(Int(illuminationProfile.averageBrightness * 100))%)")
     }
 
     private func detectAngleAsync(in image: CIImage) {
@@ -964,7 +960,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         detectedTextOrientation = textOrientation
         updateGuidanceTextWithAngleInfo()
         if textOrientation.confidence > 0.5 {
-            print("Angle detected: \(Int(textOrientation.rotationAngle))° (confidence: \(Int(textOrientation.confidence * 100))%)")
+            AppLogger.vision.debug("Angle detected: \(Int(textOrientation.rotationAngle))° (confidence: \(Int(textOrientation.confidence * 100))%)")
         }
     }
 
@@ -1133,7 +1129,7 @@ struct FrameResult {
 extension SerialScannerViewModel {
     private func setupPowerManagement() {
         powerManagementService.powerDelegate = self
-        print("[PowerManagement] Power management initialized")
+        AppLogger.power.debug("Power management initialized")
     }
     
     // MARK: - Phase 4: Power-Optimized Scanning Methods
@@ -1152,7 +1148,7 @@ extension SerialScannerViewModel {
         // Start regular auto capture with optimized settings
         startAutoCapture()
         
-        print("[PowerManagement] Started power-optimized scanning session")
+        AppLogger.power.debug("Started power-optimized scanning session")
     }
     
     private func applyCameraOptimizations(_ settings: PowerOptimizedCameraSettings) {
@@ -1168,29 +1164,29 @@ extension SerialScannerViewModel {
             toggleFlash() // Turn off flash to save power
         }
         
-        print("[PowerManagement] Applied camera optimizations - Preset: \(settings.sessionPreset), Torch: \(settings.enableTorch)")
+        AppLogger.power.debug("Applied camera optimizations - Preset: \(String(describing: settings.sessionPreset.rawValue)), Torch: \(settings.enableTorch)")
     }
     
     private func applyProcessingOptimizations(_ settings: PowerOptimizedProcessingSettings) {
         // Adjust feature flags based on power settings
         if !settings.enableSurfaceDetection && isSurfaceDetectionEnabled {
             isSurfaceDetectionEnabled = false
-            print("[PowerManagement] Disabled surface detection for power saving")
+            AppLogger.power.debug("Disabled surface detection for power saving")
         }
         
         if !settings.enableLightingAnalysis && isLightingDetectionEnabled {
             isLightingDetectionEnabled = false
-            print("[PowerManagement] Disabled lighting analysis for power saving")
+            AppLogger.power.debug("Disabled lighting analysis for power saving")
         }
         
         if !settings.enableAngleDetection && isAngleDetectionEnabled {
             isAngleDetectionEnabled = false
-            print("[PowerManagement] Disabled angle detection for power saving")
+            AppLogger.power.debug("Disabled angle detection for power saving")
         }
         
         // Apply OCR accuracy level
         textRecognitionRequest?.recognitionLevel = settings.ocrAccuracyLevel
         
-        print("[PowerManagement] Applied processing optimizations - Features reduced for power saving")
+        AppLogger.power.debug("Applied processing optimizations - Features reduced for power saving")
     }
 }

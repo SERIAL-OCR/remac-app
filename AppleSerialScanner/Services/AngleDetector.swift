@@ -98,7 +98,7 @@ class AngleDetector: ObservableObject {
 
             return analyzeTextRectangles(results)
         } catch {
-            print("Text detection failed: \(error.localizedDescription)")
+            AppLogger.vision.error("Text detection failed: \(error.localizedDescription)")
             return TextOrientation(confidence: 0.0)
         }
     }

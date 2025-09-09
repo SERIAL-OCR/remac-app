@@ -169,7 +169,7 @@ extension BatchSession {
             let data = try encoder.encode(sessions)
             UserDefaults.standard.set(data, forKey: storageKey)
         } catch {
-            print("Error saving batch sessions: \(error)")
+            AppLogger.storage.error("Error saving batch sessions: \(error.localizedDescription)")
         }
     }
 
@@ -182,7 +182,7 @@ extension BatchSession {
         do {
             return try decoder.decode([BatchSession].self, from: data)
         } catch {
-            print("Error loading batch sessions: \(error)")
+            AppLogger.storage.error("Error loading batch sessions: \(error.localizedDescription)")
             return []
         }
     }

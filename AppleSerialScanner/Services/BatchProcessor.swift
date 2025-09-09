@@ -330,7 +330,7 @@ class BatchProcessor: ObservableObject {
 
         // Generate completion statistics
         let statistics = generateStatistics(for: session)
-        print("Batch completed: \(statistics.completionRate * 100)% success rate")
+        AppLogger.ui.debug("Batch completed: \(statistics.completionRate * 100)% success rate")
     }
 
     // MARK: - Utility Methods
@@ -378,7 +378,7 @@ class BatchProcessor: ObservableObject {
     private func exportBatchResults(_ session: BatchSession) {
         // Implementation for exporting batch results
         // This will be expanded in Phase 3.0
-        print("Exporting batch results for session: \(session.name)")
+        AppLogger.ui.debug("Exporting batch results for session: \(session.name)")
     }
 
     private func generateStatistics(for session: BatchSession) -> BatchStatistics {

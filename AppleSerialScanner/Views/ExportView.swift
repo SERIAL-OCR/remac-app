@@ -114,7 +114,7 @@ struct ExportView: View {
 
     private func shareExportedFiles() {
         // Implement file sharing
-        print("Sharing files: \(exportedFiles)")
+        AppLogger.ui.debug("Sharing files: \(exportedFiles)")
     }
 }
 
