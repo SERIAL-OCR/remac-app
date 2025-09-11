@@ -9,19 +9,19 @@ struct SharedCameraView: UIViewRepresentable {
         let view = CameraContainerView()
         view.backgroundColor = .black
         
-        if let previewLayer = previewLayer {
+        if let previewLayer = self.previewLayer {
             view.setupPreviewLayer(previewLayer)
-            AppLogger.camera.debug("[iOS] makeUIView - view.bounds: \(String(describing: view.bounds))")
-            AppLogger.camera.debug("[iOS] Added previewLayer with frame: \(String(describing: previewLayer.frame))")
+            print("[CameraView] makeUIView - view.bounds: \(view.bounds)")
+            print("[CameraView] Added previewLayer with frame: \(previewLayer.frame)")
         }
         
         return view
     }
     
     func updateUIView(_ uiView: CameraContainerView, context: Context) {
-        if let previewLayer = previewLayer {
+        if let previewLayer = self.previewLayer {
             uiView.updatePreviewLayerFrame(previewLayer)
-            AppLogger.camera.debug("[iOS] updateUIView - previewLayer.frame: \(String(describing: previewLayer.frame)), uiView.bounds: \(String(describing: uiView.bounds))")
+            print("[CameraView] updateUIView - previewLayer.frame: \(previewLayer.frame), uiView.bounds: \(uiView.bounds)")
         }
     }
 }
@@ -45,14 +45,14 @@ class CameraContainerView: UIView {
     func updatePreviewLayerFrame(_ layer: AVCaptureVideoPreviewLayer) {
         // Ensure we have valid bounds before setting frame
         guard bounds.width > 0 && bounds.height > 0 else {
-            AppLogger.camera.debug("[iOS] Skipping frame update - invalid bounds: \(String(describing: bounds))")
+            print("[CameraView] Skipping frame update - invalid bounds: \(bounds)")
             return
         }
         
         // Track when we first get valid bounds
         if !hasValidBounds {
             hasValidBounds = true
-            AppLogger.camera.debug("[iOS] First valid bounds detected: \(String(describing: bounds))")
+            print("[CameraView] First valid bounds detected: \(bounds)")
         }
         
         // Skip update if frame hasn't changed to prevent recursive updates
@@ -65,7 +65,7 @@ class CameraContainerView: UIView {
         layer.frame = bounds
         CATransaction.commit()
         
-        AppLogger.camera.debug("[iOS] Updated previewLayer.frame to: \(String(describing: layer.frame))")
+        print("[CameraView] Updated previewLayer.frame to: \(layer.frame)")
     }
     
     override func layoutSubviews() {
@@ -98,19 +98,19 @@ struct SharedCameraView: NSViewRepresentable {
         view.wantsLayer = true
         view.layer?.backgroundColor = NSColor.black.cgColor
         
-        if let previewLayer = previewLayer {
+        if let previewLayer = self.previewLayer {
             view.setupPreviewLayer(previewLayer)
-            AppLogger.camera.debug("[macOS] makeNSView - view.bounds: \(String(describing: view.bounds))")
-            AppLogger.camera.debug("[macOS] Added previewLayer with frame: \(String(describing: previewLayer.frame))")
+            print("[CameraView] makeNSView - view.bounds: \(view.bounds)")
+            print("[CameraView] Added previewLayer with frame: \(previewLayer.frame)")
         }
         
         return view
     }
     
     func updateNSView(_ nsView: CameraContainerNSView, context: Context) {
-        if let previewLayer = previewLayer {
+        if let previewLayer = self.previewLayer {
             nsView.updatePreviewLayerFrame(previewLayer)
-            AppLogger.camera.debug("[macOS] updateNSView - previewLayer.frame: \(String(describing: previewLayer.frame)), nsView.bounds: \(String(describing: nsView.bounds))")
+            print("[CameraView] updateNSView - previewLayer.frame: \(previewLayer.frame), nsView.bounds: \(nsView.bounds)")
         }
     }
 }
@@ -134,14 +134,14 @@ class CameraContainerNSView: NSView {
     func updatePreviewLayerFrame(_ layer: AVCaptureVideoPreviewLayer) {
         // Ensure we have valid bounds before setting frame
         guard bounds.width > 0 && bounds.height > 0 else {
-            AppLogger.camera.debug("[macOS] Skipping frame update - invalid bounds: \(String(describing: bounds))")
+            print("[CameraView] Skipping frame update - invalid bounds: \(bounds)")
             return
         }
         
         // Track when we first get valid bounds
         if !hasValidBounds {
             hasValidBounds = true
-            AppLogger.camera.debug("[macOS] First valid bounds detected: \(String(describing: bounds))")
+            print("[CameraView] First valid bounds detected: \(bounds)")
         }
         
         // Skip update if frame hasn't changed to prevent recursive updates
@@ -160,7 +160,7 @@ class CameraContainerNSView: NSView {
             self.layoutSubtreeIfNeeded()
         }
         
-        AppLogger.camera.debug("[macOS] Updated previewLayer.frame to: \(String(describing: layer.frame))")
+        print("[CameraView] Updated previewLayer.frame to: \(layer.frame)")
     }
     
     override func layout() {

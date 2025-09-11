@@ -15,7 +15,7 @@ extension SerialScannerViewModel: PowerManagementDelegate {
             self?.backgroundProcessingManager.enableThrottling()
             // Reduce frame processing rate in power saving mode
             self?.backgroundProcessingManager.setMaxProcessingRate(5) // 5 fps instead of 15
-            AppLogger.power.debug("Entered power saving mode - reduced processing rate to 5fps")
+            print("Entered power saving mode - reduced processing rate to 5fps")
         }
     }
     
@@ -25,7 +25,7 @@ extension SerialScannerViewModel: PowerManagementDelegate {
             self?.backgroundProcessingManager.disableThrottling()
             // Restore normal frame processing rate
             self?.backgroundProcessingManager.setMaxProcessingRate(15)
-            AppLogger.power.debug("Exited power saving mode - restored processing rate to 15fps")
+            print("Exited power saving mode - restored processing rate to 15fps")
         }
     }
     
@@ -33,7 +33,7 @@ extension SerialScannerViewModel: PowerManagementDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.isScanning = false
             self?.backgroundProcessingManager.pauseProcessing()
-            AppLogger.power.debug("Scanning timeout - paused processing due to inactivity")
+            print("Scanning timeout - paused processing due to inactivity")
         }
     }
 }
@@ -50,7 +50,17 @@ extension SerialScannerViewModel {
     
     private func logPerformanceMetrics() {
         let stats = backgroundProcessingManager.getPerformanceStats()
-        AppLogger.power.debug("Performance Stats - framesProcessed=\(stats["framesProcessed"] ?? 0), framesDropped=\(stats["framesDropped"] ?? 0), avgProcessingMs=\(stats["avgProcessingTime"] ?? 0), queueDepth=\(stats["queueDepth"] ?? 0), powerSaving=\(isPowerSavingModeActive ? "ON" : "OFF")")
+        let framesProcessed = stats["framesProcessed"] as? Int ?? 0
+        let framesDropped = stats["framesDropped"] as? Int ?? 0
+        let avgProcessingTime = stats["avgProcessingTime"] as? Double ?? 0.0
+        let queueDepth = stats["queueDepth"] as? Int ?? 0
+        print("   Performance Stats:")
+        print("   Frames processed: \(framesProcessed)")
+        print("   Frames dropped: \(framesDropped)")
+        print(String(format: "   Average processing time: %.1fms", avgProcessingTime))
+        print("   Queue depth: \(queueDepth)")
+        let powerStatus = isPowerSavingModeActive ? "ON" : "OFF"
+        print("   Power saving: \(powerStatus)")
     }
     
     private func adaptProcessingBasedOnPerformance() {
@@ -62,11 +72,11 @@ extension SerialScannerViewModel {
         if avgProcessingTime > 100 || queueDepth > 5 {
             // Reduce processing complexity
             backgroundProcessingManager.enableFastMode()
-            AppLogger.power.debug("Enabled fast mode due to performance issues")
+            print(" Enabled fast mode due to performance issues")
         } else if avgProcessingTime < 50 && queueDepth < 2 {
             // We can afford higher quality processing
             backgroundProcessingManager.disableFastMode()
-            AppLogger.power.debug("Disabled fast mode - performance is good")
+            print("Disabled fast mode - performance is good")
         }
     }
     
@@ -102,16 +112,16 @@ extension SerialScannerViewModel {
         let avgTime = stats["avgProcessingTime"] as? Double ?? 0
         let dropped = stats["framesDropped"] as? Int ?? 0
         let processed = stats["framesProcessed"] as? Int ?? 0
-        
         let dropRate = processed > 0 ? Double(dropped) / Double(processed) * 100 : 0
-        
-        return """
-        🚀 Performance Status:
-        • Processing Time: \(String(format: "%.1f", avgTime))ms
-        • Frame Drop Rate: \(String(format: "%.1f", dropRate))%
-        • Power Saving: \(isPowerSavingModeActive ? "Active" : "Inactive")
-        • Thermal State: \(ProcessInfo.processInfo.thermalState.description)
-        """
+        let powerState = isPowerSavingModeActive ? "Active" : "Inactive"
+        let lines: [String] = [
+            "Performance Status:",
+            "• Processing Time: \(String(format: "%.1f", avgTime))ms",
+            "• Frame Drop Rate: \(String(format: "%.1f", dropRate))%",
+            "• Power Saving: \(powerState)",
+            "• Thermal State: \(ProcessInfo.processInfo.thermalState.description)"
+        ]
+        return lines.joined(separator: "\n")
     }
 }
 

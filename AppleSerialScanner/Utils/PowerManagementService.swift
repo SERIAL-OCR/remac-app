@@ -165,7 +165,7 @@ class PowerManagementService: ObservableObject {
             scanningTimeoutInterval = lowPowerTimeoutInterval
         }
         
-        AppLogger.power.debug("Power saving enabled - Battery: \(Int(batteryLevel * 100))%, Thermal: \(String(describing: thermalState.rawValue))")
+        print("[PowerManagement] Power saving mode enabled - Battery: \(Int(self.batteryLevel * 100))%, Thermal: \(self.thermalState)")
     }
     
     private func disablePowerSavingMode() {
@@ -175,7 +175,7 @@ class PowerManagementService: ObservableObject {
         // Restore normal scanning timeout
         scanningTimeoutInterval = 120.0
         
-        AppLogger.power.debug("Power saving disabled")
+        print("[PowerManagement] Power saving mode disabled")
     }
     
     // MARK: - Scanning Session Management
@@ -188,12 +188,12 @@ class PowerManagementService: ObservableObject {
             self?.handleScanningTimeout()
         }
         
-        AppLogger.power.debug("Scanning session started with \(Int(timeoutInterval))s timeout")
+        print("[PowerManagement] Scanning session started with \(Int(timeoutInterval))s timeout")
     }
     
     func stopScanningSession() {
         stopScanningTimeout()
-        AppLogger.power.debug("Scanning session stopped")
+        print("[PowerManagement] Scanning session stopped")
     }
     
     private func stopScanningTimeout() {
@@ -203,7 +203,7 @@ class PowerManagementService: ObservableObject {
     
     private func handleScanningTimeout() {
         powerDelegate?.powerManagementDidTimeoutScanning()
-        AppLogger.power.debug("Scanning session timed out")
+        print("[PowerManagement] Scanning session timed out")
     }
     
     // MARK: - Power Optimization Recommendations

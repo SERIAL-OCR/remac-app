@@ -1,56 +1,26 @@
 import Foundation
 import Network
-import OSLog
 
 // MARK: - Models are defined in Models/ folder
 
 // MARK: - Backend Service
 class BackendService: ObservableObject {
-    @Published var baseURL: String {
-        didSet {
-            userDefaults.set(baseURL, forKey: "backend_base_url")
-        }
-    }
-    @Published var apiKey: String {
-        didSet {
-            do { try SecureStore.set(apiKey, forKey: "backend_api_key") } catch {
-                userDefaults.set(apiKey, forKey: "backend_api_key")
-                AppLogger.storage.error("Failed to persist API key: \(error.localizedDescription)")
-            }
-        }
-    }
+    @Published var baseURL: String = "http://10.36.181.235:8000"
+    @Published var apiKey: String = "phase2-pilot-key-2024" // Set default API key
     @Published var isConnected: Bool = false
     @Published var networkAvailable: Bool = true
     @Published var connectionError: String? = nil
     
-    private let session: URLSession
+    private let session = URLSession.shared
     private let networkMonitor = NWPathMonitor()
     private let monitorQueue = DispatchQueue(label: "NetworkMonitor")
-    private let userDefaults = UserDefaults.standard
     
     init() {
-        // Load persisted settings
-        let storedBaseURL = userDefaults.string(forKey: "backend_base_url")
-        let defaultBaseURL = "https://api.example.com"
-        let initialBaseURL = (storedBaseURL?.isEmpty == false ? storedBaseURL! : defaultBaseURL)
-        self.baseURL = initialBaseURL
-
-        let storedApiKey = (try? SecureStore.get(forKey: "backend_api_key")) ?? userDefaults.string(forKey: "backend_api_key")
-        self.apiKey = storedApiKey ?? ""
-
-        // Configure dedicated URLSession with timeouts
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 15
-        configuration.timeoutIntervalForResource = 30
-        configuration.waitsForConnectivity = true
-        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        self.session = URLSession(configuration: configuration)
-
         setupNetworkMonitoring()
     }
     
     private func setupNetworkMonitoring() {
-        networkMonitor.pathUpdateHandler = { [weak self] path in
+        networkMonitor.pathUpdateHandler = { [weak self] (path: NWPath) -> Void in
             DispatchQueue.main.async {
                 self?.networkAvailable = path.status == .satisfied
                 if path.status != .satisfied {
@@ -58,13 +28,13 @@ class BackendService: ObservableObject {
                     self?.isConnected = false
                 } else {
                     self?.connectionError = nil
-                    // Don't set isConnected to true here - only after a successful connection test
-                    Task {
+                    Task { [weak self] in
                         _ = await self?.testConnection()
                     }
                 }
-                
-                AppLogger.network.debug("Network status: \(String(describing: path.status.rawValue)), available=\(self?.networkAvailable ?? false)")
+                // Simplified logging to avoid ambiguous expression with custom logger
+                let available = self?.networkAvailable ?? false
+                print("[Network] status=\(path.status) available=\(available)")
             }
         }
         networkMonitor.start(queue: monitorQueue)
@@ -79,7 +49,6 @@ class BackendService: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
         return request
     }
 
@@ -89,7 +58,7 @@ class BackendService: ObservableObject {
             throw BackendError.networkOffline
         }
         
-        guard let url = URL(string: baseURL)?.appendingPathComponent("serials") else {
+        guard let url = URL(string: "\(baseURL)/serials") else {
             throw BackendError.invalidURL
         }
         var request = authorizedRequest(url: url, method: "POST")
@@ -123,8 +92,7 @@ class BackendService: ObservableObject {
             throw BackendError.networkOffline
         }
         
-        guard let base = URL(string: baseURL) else { throw BackendError.invalidURL }
-        var components = URLComponents(url: base.appendingPathComponent("history"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(string: "\(baseURL)/history")!
         components.queryItems = [
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "offset", value: "\(offset)")
@@ -178,8 +146,7 @@ class BackendService: ObservableObject {
             throw BackendError.networkOffline
         }
         
-        guard let base = URL(string: baseURL) else { throw BackendError.invalidURL }
-        var components = URLComponents(url: base.appendingPathComponent("export"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(string: "\(baseURL)/export")!
         components.queryItems = [
             URLQueryItem(name: "format", value: format)
         ]
@@ -217,7 +184,7 @@ class BackendService: ObservableObject {
             throw BackendError.networkOffline
         }
         
-        guard let url = URL(string: baseURL)?.appendingPathComponent("stats") else {
+        guard let url = URL(string: "\(baseURL)/stats") else {
             throw BackendError.invalidURL
         }
         
@@ -251,7 +218,7 @@ class BackendService: ObservableObject {
             throw BackendError.networkOffline
         }
         
-        guard let url = URL(string: baseURL)?.appendingPathComponent("config") else {
+        guard let url = URL(string: "\(baseURL)/config") else {
             throw BackendError.invalidURL
         }
         
@@ -297,7 +264,7 @@ class BackendService: ObservableObject {
             throw BackendError.networkOffline
         }
         
-        guard let url = URL(string: baseURL)?.appendingPathComponent("health") else {
+        guard let url = URL(string: "\(baseURL)/health") else {
             throw BackendError.invalidURL
         }
         var request = authorizedRequest(url: url)
