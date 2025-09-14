@@ -2,7 +2,11 @@ import Foundation
 import CoreML
 import Vision
 import CoreImage
+#if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 /// Serial Format Classifier using Core ML to validate 12-character Apple serial format
 @MainActor
@@ -55,9 +59,9 @@ class SerialFormatClassifier: ObservableObject {
         do {
             let model = try await modelLoader.loadSerialFormatClassifier()
             isReady = true
-            print("✅ SerialFormatClassifier ready")
+            print("SerialFormatClassifier ready")
         } catch {
-            print("❌ SerialFormatClassifier warmup failed: \(error)")
+            print("SerialFormatClassifier warmup failed: \(error)")
             isReady = false
         }
     }

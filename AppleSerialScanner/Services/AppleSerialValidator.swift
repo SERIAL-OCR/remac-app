@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Validation Result
-struct ValidationResult {
+struct AppleSerialValidationResult {
     let serial: String
     let confidence: Float
     let level: ValidationLevel
@@ -57,7 +57,7 @@ class AppleSerialValidator {
     ]
     
     // MARK: - Main Validation Method
-    func validate_with_corrections(_ input: String, _ confidence: Float) -> ValidationResult {
+    func validate_with_corrections(_ input: String, _ confidence: Float) -> AppleSerialValidationResult {
         let cleaned = cleanInput(input)
         let corrections = generateCorrections(cleaned)
         
@@ -84,7 +84,7 @@ class AppleSerialValidator {
         
         let notes = generateNotes(original: input, corrected: bestSerial, confidence: bestConfidence)
         
-        return ValidationResult(
+        return AppleSerialValidationResult(
             serial: bestSerial,
             confidence: bestConfidence,
             level: bestLevel,
@@ -188,11 +188,11 @@ class AppleSerialValidator {
     // MARK: - Additional Validation Methods
     
     /// Validate a serial number without corrections
-    func validate(_ serial: String, _ confidence: Float) -> ValidationResult {
+    func validate(_ serial: String, _ confidence: Float) -> AppleSerialValidationResult {
         let cleaned = cleanInput(serial)
         let level = determineValidationLevel(confidence)
         
-        return ValidationResult(
+        return AppleSerialValidationResult(
             serial: cleaned,
             confidence: confidence,
             level: level,

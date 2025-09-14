@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1866026A2E75A48C00C3C5D7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 186602082E75A48C00C3C5D7 /* README.md */; };
+		186602CF2E75A6D900C3C5D7 /* plan.md in Resources */ = {isa = PBXBuildFile; fileRef = 186602CE2E75A6D900C3C5D7 /* plan.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		183782502E663ABA000BB20E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +32,8 @@
 		183782412E663AB9000BB20E /* AppleSerialScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppleSerialScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1837824F2E663ABA000BB20E /* AppleSerialScannerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AppleSerialScannerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		183782592E663ABA000BB20E /* AppleSerialScannerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AppleSerialScannerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		186602082E75A48C00C3C5D7 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		186602CE2E75A6D900C3C5D7 /* plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = plan.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -89,6 +96,8 @@
 		183782382E663AB9000BB20E = {
 			isa = PBXGroup;
 			children = (
+				186602CE2E75A6D900C3C5D7 /* plan.md */,
+				186602082E75A48C00C3C5D7 /* README.md */,
 				183782432E663AB9000BB20E /* AppleSerialScanner */,
 				183782522E663ABA000BB20E /* AppleSerialScannerTests */,
 				1837825C2E663ABA000BB20E /* AppleSerialScannerUITests */,
@@ -226,6 +235,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				186602CF2E75A6D900C3C5D7 /* plan.md in Resources */,
+				1866026A2E75A48C00C3C5D7 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

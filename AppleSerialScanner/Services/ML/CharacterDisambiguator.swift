@@ -62,9 +62,9 @@ class CharacterDisambiguator: ObservableObject {
         do {
             let model = try await modelLoader.loadCharacterDisambiguator()
             isReady = true
-            print("✅ CharacterDisambiguator ready")
+            print("CharacterDisambiguator ready")
         } catch {
-            print("❌ CharacterDisambiguator warmup failed: \(error)")
+            print("CharacterDisambiguator warmup failed: \(error)")
             isReady = false
         }
     }

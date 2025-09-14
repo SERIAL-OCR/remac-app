@@ -179,14 +179,14 @@ class BatchProcessor: ObservableObject {
               var item = currentItem,
               item.id == session.items[session.currentIndex].id else { return }
 
-        switch validationResult.level {
-        case .ACCEPT:
+        // Extract the best candidate from the validation result
+        if let bestCandidate = validationResult.bestCandidate {
             // Success - update item and move to next
             session.updateItemStatus(
                 itemId: item.id,
                 status: .completed,
-                serial: validationResult.serial,
-                confidence: validationResult.confidence
+                serial: bestCandidate.candidate.text,
+                confidence: bestCandidate.compositeScore
             )
 
             // Record processing time
@@ -203,26 +203,26 @@ class BatchProcessor: ObservableObject {
                 // Wait for manual confirmation
                 scannerViewModel?.guidanceText = "Serial captured! Tap 'Next' to continue or 'Complete' to finish."
             }
-
-        case .BORDERLINE:
-            // Handle borderline results based on settings
+        } else if !validationResult.allValidCandidates.isEmpty {
+            // Handle case where we have valid candidates but no single best candidate
+            let candidate = validationResult.allValidCandidates.first!
+            
             if session.settings.retryFailedItems && item.retryCount < session.settings.maxRetries {
                 // Retry with modified settings
                 retryItem(&item, &session)
             } else {
-                // Accept borderline result
+                // Accept the candidate with lower confidence
                 session.updateItemStatus(
                     itemId: item.id,
                     status: .completed,
-                    serial: validationResult.serial,
-                    confidence: validationResult.confidence
+                    serial: candidate.candidate.text,
+                    confidence: candidate.compositeScore
                 )
                 currentSession = session
                 scheduleAutoAdvance()
             }
-
-        case .REJECT:
-            // Handle rejection
+        } else {
+            // No valid candidates found - handle as rejection
             if session.settings.retryFailedItems && item.retryCount < session.settings.maxRetries {
                 retryItem(&item, &session)
             } else {
@@ -230,7 +230,7 @@ class BatchProcessor: ObservableObject {
                 session.updateItemStatus(
                     itemId: item.id,
                     status: .failed,
-                    errorMessage: "Validation failed - invalid serial format"
+                    errorMessage: "Validation failed - no valid serial found"
                 )
                 currentSession = session
                 handleItemFailure()
@@ -287,10 +287,13 @@ class BatchProcessor: ObservableObject {
 
         autoAdvanceTimer?.invalidate()
         autoAdvanceTimer = Timer.scheduledTimer(withTimeInterval: session.settings.autoAdvanceDelay, repeats: false) { [weak self] _ in
-            self?.advanceToNextItem()
+            Task { @MainActor in
+                self?.advanceToNextItem()
+            }
         }
     }
 
+    @MainActor
     func advanceToNextItem() {
         guard var session = currentSession else { return }
 
@@ -354,10 +357,13 @@ class BatchProcessor: ObservableObject {
 
         sessionTimeoutTimer?.invalidate()
         sessionTimeoutTimer = Timer.scheduledTimer(withTimeInterval: session.settings.sessionTimeout, repeats: false) { [weak self] _ in
-            self?.handleSessionTimeout()
+            Task { @MainActor in
+                self?.handleSessionTimeout()
+            }
         }
     }
 
+    @MainActor
     private func handleSessionTimeout() {
         pauseBatchSession()
         scannerViewModel?.guidanceText = "Batch session paused due to inactivity. Resume when ready."

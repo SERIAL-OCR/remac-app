@@ -5,18 +5,35 @@ import Network
 
 // MARK: - Backend Service
 class BackendService: ObservableObject {
-    @Published var baseURL: String = "http://10.36.181.235:8000"
-    @Published var apiKey: String = "phase2-pilot-key-2024" // Set default API key
+    @Published var baseURL: String = "http://192.168.1.34:8000"  // Updated to correct IP address
+    @Published var apiKey: String = "phase2-pilot-key-2024"
     @Published var isConnected: Bool = false
     @Published var networkAvailable: Bool = true
     @Published var connectionError: String? = nil
     
-    private let session = URLSession.shared
+    private let session: URLSession
     private let networkMonitor = NWPathMonitor()
     private let monitorQueue = DispatchQueue(label: "NetworkMonitor")
     
+    // Retry configuration
+    private let maxRetries = 3
+    private let baseRetryDelay: TimeInterval = 1.0
+    private let requestTimeout: TimeInterval = 10.0
+    
     init() {
+        // Configure URLSession with shorter timeouts
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = requestTimeout
+        config.timeoutIntervalForResource = requestTimeout * 2
+        config.waitsForConnectivity = false
+        self.session = URLSession(configuration: config)
+        
         setupNetworkMonitoring()
+        
+        // Test connection on startup
+        Task { [weak self] in
+            _ = await self?.testConnection()
+        }
     }
     
     private func setupNetworkMonitoring() {
@@ -52,47 +69,106 @@ class BackendService: ObservableObject {
         return request
     }
 
-    // MARK: - Submit Serial
+    // MARK: - Retry Logic with Exponential Backoff
+    private func makeRequestWithRetry<T: Codable>(
+        endpoint: String,
+        method: String = "GET",
+        body: Data? = nil,
+        responseType: T.Type
+    ) async throws -> T {
+        var lastError: Error?
+        
+        for attempt in 1...maxRetries {
+            do {
+                guard let url = URL(string: "\(baseURL)\(endpoint)") else {
+                    throw BackendError.invalidURL
+                }
+                
+                var request = authorizedRequest(url: url, method: method)
+                
+                if let body = body {
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    request.httpBody = body
+                }
+                
+                print("API Request attempt \(attempt)/\(maxRetries): \(method) \(url)")
+                
+                let (data, response) = try await session.data(for: request)
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw BackendError.invalidResponse
+                }
+                
+                if httpResponse.statusCode == 200 {
+                    let decoder = JSONDecoder()
+                    decoder.dateDecodingStrategy = .iso8601
+                    
+                    await updateConnectionStatus(true)
+                    let result = try decoder.decode(responseType, from: data)
+                    
+                    print("API Request successful after \(attempt) attempt(s)")
+                    return result
+                } else {
+                    throw BackendError.serverError(httpResponse.statusCode)
+                }
+                
+            } catch {
+                lastError = error
+                print("API Request attempt \(attempt) failed: \(error.localizedDescription)")
+                
+                // Don't retry on certain errors
+                if let backendError = error as? BackendError {
+                    switch backendError {
+                    case .invalidURL, .decodingError:
+                        throw error // Don't retry these
+                    case .serverError(let code) where code >= 400 && code < 500:
+                        throw error // Don't retry client errors
+                    default:
+                        break // Retry for other errors
+                    }
+                }
+                
+                // If this is the last attempt, throw the error
+                if attempt == maxRetries {
+                    await handleURLError(error as? URLError ?? URLError(.unknown))
+                    break
+                }
+                
+                // Exponential backoff: wait longer between retries
+                let delay = baseRetryDelay * pow(2.0, Double(attempt - 1))
+                print("Waiting \(String(format: "%.1f", delay))s before retry...")
+                
+                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            }
+        }
+        
+        throw lastError ?? BackendError.networkError(URLError(.unknown))
+    }
+
+    // MARK: - Updated Submit Serial with Retry Logic
     func submitSerial(_ submission: SerialSubmission) async throws -> SerialResponse {
         guard networkAvailable else {
             throw BackendError.networkOffline
         }
         
-        guard let url = URL(string: "\(baseURL)/serials") else {
-            throw BackendError.invalidURL
-        }
-        var request = authorizedRequest(url: url, method: "POST")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let encoder = JSONEncoder()
-        request.httpBody = try encoder.encode(submission)
+        let body = try encoder.encode(submission)
         
-        do {
-            let (data, response) = try await session.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw BackendError.invalidResponse
-            }
-            if httpResponse.statusCode == 200 {
-                let decoder = JSONDecoder()
-                await updateConnectionStatus(true)
-                return try decoder.decode(SerialResponse.self, from: data)
-            } else {
-                throw BackendError.serverError(httpResponse.statusCode)
-            }
-        } catch let error as URLError {
-            await handleURLError(error)
-            throw BackendError.networkError(error)
-        } catch {
-            throw error
-        }
+        return try await makeRequestWithRetry(
+            endpoint: "/serials",
+            method: "POST",
+            body: body,
+            responseType: SerialResponse.self
+        )
     }
-    
-    // MARK: - Fetch History
+
+    // MARK: - Updated Fetch History with Retry Logic
     func fetchHistory(limit: Int = 50, offset: Int = 0, dateFrom: Date? = nil, dateTo: Date? = nil, source: String? = nil, deviceType: String? = nil) async throws -> [ScanHistory] {
         guard networkAvailable else {
             throw BackendError.networkOffline
         }
         
-        var components = URLComponents(string: "\(baseURL)/history")!
+        var components = URLComponents(string: "/history")!
         components.queryItems = [
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "offset", value: "\(offset)")
@@ -111,211 +187,71 @@ class BackendService: ObservableObject {
             components.queryItems?.append(URLQueryItem(name: "deviceType", value: deviceType))
         }
 
-        guard let url = components.url else {
-            throw BackendError.invalidURL
-        }
-
-        var request = authorizedRequest(url: url)
-
-        do {
-            let (data, response) = try await session.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw BackendError.invalidResponse
-            }
-            
-            if httpResponse.statusCode == 200 {
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-                await updateConnectionStatus(true)
-                return try decoder.decode([ScanHistory].self, from: data)
-            } else {
-                throw BackendError.serverError(httpResponse.statusCode)
-            }
-        } catch let error as URLError {
-            await handleURLError(error)
-            throw BackendError.networkError(error)
-        } catch {
-            throw error
-        }
+        let endpoint = components.url?.absoluteString ?? "/history"
+        
+        return try await makeRequestWithRetry(
+            endpoint: endpoint,
+            responseType: [ScanHistory].self
+        )
     }
-    
-    // MARK: - Export History
-    func exportHistory(format: String) async throws -> Data {
-        guard networkAvailable else {
-            throw BackendError.networkOffline
-        }
-        
-        var components = URLComponents(string: "\(baseURL)/export")!
-        components.queryItems = [
-            URLQueryItem(name: "format", value: format)
-        ]
-        
-        guard let url = components.url else {
-            throw BackendError.invalidURL
-        }
-        
-        var request = authorizedRequest(url: url)
 
-        do {
-            let (data, response) = try await session.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw BackendError.invalidResponse
-            }
-            
-            if httpResponse.statusCode == 200 {
-                await updateConnectionStatus(true)
-                return data
-            } else {
-                throw BackendError.serverError(httpResponse.statusCode)
-            }
-        } catch let error as URLError {
-            await handleURLError(error)
-            throw BackendError.networkError(error)
-        } catch {
-            throw error
-        }
-    }
-    
-    // MARK: - Fetch System Stats
-    func fetchSystemStats() async throws -> SystemStats {
-        guard networkAvailable else {
-            throw BackendError.networkOffline
-        }
-        
-        guard let url = URL(string: "\(baseURL)/stats") else {
-            throw BackendError.invalidURL
-        }
-        
-        var request = authorizedRequest(url: url)
-
-        do {
-            let (data, response) = try await session.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw BackendError.invalidResponse
-            }
-            
-            if httpResponse.statusCode == 200 {
-                let decoder = JSONDecoder()
-                await updateConnectionStatus(true)
-                return try decoder.decode(SystemStats.self, from: data)
-            } else {
-                throw BackendError.serverError(httpResponse.statusCode)
-            }
-        } catch let error as URLError {
-            await handleURLError(error)
-            throw BackendError.networkError(error)
-        } catch {
-            throw error
-        }
-    }
-    
-    // MARK: - Get Client Config
+    // MARK: - Updated Get Client Config with Retry Logic
     func getClientConfig() async throws -> ClientConfig {
         guard networkAvailable else {
             throw BackendError.networkOffline
         }
         
-        guard let url = URL(string: "\(baseURL)/config") else {
-            throw BackendError.invalidURL
-        }
-        
-        var request = authorizedRequest(url: url)
-
-        do {
-            let (data, response) = try await session.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw BackendError.invalidResponse
-            }
-            
-            if httpResponse.statusCode == 200 {
-                let decoder = JSONDecoder()
-                await updateConnectionStatus(true)
-                return try decoder.decode(ClientConfig.self, from: data)
-            } else {
-                throw BackendError.serverError(httpResponse.statusCode)
-            }
-        } catch let error as URLError {
-            await handleURLError(error)
-            throw BackendError.networkError(error)
-        } catch {
-            throw error
-        }
-    }
-    
-    // MARK: - Test Connection
-    func testConnection() async -> Bool {
-        do {
-            _ = try await getClientConfig()
-            await updateConnectionStatus(true)
-            return true
-        } catch {
-            await updateConnectionStatus(false, error: error)
-            return false
-        }
+        return try await makeRequestWithRetry(
+            endpoint: "/config",
+            responseType: ClientConfig.self
+        )
     }
 
-    // MARK: - Fetch Health Status
-    func fetchHealthStatus() async throws -> HealthStatus {
+    // MARK: - Updated Fetch System Stats with Retry Logic
+    func fetchSystemStats() async throws -> SystemStats {
         guard networkAvailable else {
             throw BackendError.networkOffline
         }
         
-        guard let url = URL(string: "\(baseURL)/health") else {
-            throw BackendError.invalidURL
-        }
-        var request = authorizedRequest(url: url)
-        
-        do {
-            let (data, response) = try await session.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw BackendError.invalidResponse
-            }
-            if httpResponse.statusCode == 200 {
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-                await updateConnectionStatus(true)
-                return try decoder.decode(HealthStatus.self, from: data)
-            } else {
-                throw BackendError.serverError(httpResponse.statusCode)
-            }
-        } catch let error as URLError {
-            await handleURLError(error)
-            throw BackendError.networkError(error)
-        } catch {
-            throw error
-        }
+        return try await makeRequestWithRetry(
+            endpoint: "/stats",
+            responseType: SystemStats.self
+        )
     }
 
-    // Update healthCheck to use /health
+    // MARK: - Updated Health Check with Retry Logic
     func healthCheck() async throws -> Bool {
         guard networkAvailable else {
             throw BackendError.networkOffline
         }
         
-        guard let url = URL(string: "\(baseURL)/health") else {
-            throw BackendError.invalidURL
-        }
-        var request = authorizedRequest(url: url)
-        
         do {
-            let (_, response) = try await session.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw BackendError.invalidResponse
-            }
-            await updateConnectionStatus(true)
-            return httpResponse.statusCode == 200
-        } catch let error as URLError {
-            await handleURLError(error)
-            throw BackendError.networkError(error)
+            _ = try await makeRequestWithRetry(
+                endpoint: "/health",
+                responseType: HealthStatus.self
+            )
+            return true
         } catch {
-            throw error
+            return false
         }
     }
-    
+
+    // MARK: - Test Connection with Enhanced Logging
+    func testConnection() async -> Bool {
+        print("Testing connection to \(baseURL)...")
+        
+        do {
+            _ = try await getClientConfig()
+            await updateConnectionStatus(true)
+            print("Connection test successful")
+            return true
+        } catch {
+            await updateConnectionStatus(false, error: error)
+            print("Connection test failed: \(error.localizedDescription)")
+            return false
+        }
+    }
+
     // Helper method to update connection status
     @MainActor
     private func updateConnectionStatus(_ connected: Bool, error: Error? = nil) {

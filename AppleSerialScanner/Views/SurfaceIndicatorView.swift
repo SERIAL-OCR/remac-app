@@ -7,12 +7,12 @@ struct SurfaceIndicatorView: View {
     var body: some View {
         HStack(spacing: 8) {
             // Surface type icon
-            Image(systemName: viewModel.detectedSurfaceType.iconName)
+            Image(systemName: surfaceTypeIconName)
                 .foregroundColor(iconColor)
                 .font(.system(size: 16, weight: .medium))
 
             // Surface type text
-            Text(viewModel.detectedSurfaceType.description)
+            Text(surfaceTypeDescription)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white)
 
@@ -54,16 +54,58 @@ struct SurfaceIndicatorView: View {
         .animation(.easeInOut(duration: 0.3), value: viewModel.surfaceDetectionConfidence)
     }
 
+    // MARK: - Computed Properties
+
+    private var surfaceTypeIconName: String {
+        switch viewModel.detectedSurfaceType {
+        case .screen:
+            return "display"
+        case .chassis:
+            return "rectangle.3.group"
+        case .metal:
+            return "circlebadge.2"
+        case .plastic:
+            return "cube"
+        case .glass:
+            return "circle.grid.cross"
+        case .paper:
+            return "doc.text"
+        case .unknown:
+            return "questionmark.circle"
+        }
+    }
+
+    private var surfaceTypeDescription: String {
+        switch viewModel.detectedSurfaceType {
+        case .screen:
+            return "Screen"
+        case .chassis:
+            return "Chassis"
+        case .metal:
+            return "Metal"
+        case .plastic:
+            return "Plastic"
+        case .glass:
+            return "Glass"
+        case .paper:
+            return "Paper"
+        case .unknown:
+            return "Unknown"
+        }
+    }
+
     private var iconColor: Color {
         switch viewModel.detectedSurfaceType {
+        case .screen:
+            return .green
+        case .chassis:
+            return .gray
         case .metal:
             return .orange
         case .plastic:
             return .blue
         case .glass:
             return .cyan
-        case .screen:
-            return .green
         case .paper:
             return .yellow
         case .unknown:
@@ -97,7 +139,7 @@ struct CompactSurfaceIndicatorView: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: viewModel.detectedSurfaceType.iconName)
+            Image(systemName: surfaceTypeIconName)
                 .foregroundColor(iconColor)
                 .font(.system(size: 14, weight: .medium))
 
@@ -117,16 +159,37 @@ struct CompactSurfaceIndicatorView: View {
         .animation(.easeInOut(duration: 0.3), value: viewModel.detectedSurfaceType)
     }
 
+    private var surfaceTypeIconName: String {
+        switch viewModel.detectedSurfaceType {
+        case .screen:
+            return "display"
+        case .chassis:
+            return "rectangle.3.group"
+        case .metal:
+            return "circlebadge.2"
+        case .plastic:
+            return "cube"
+        case .glass:
+            return "circle.grid.cross"
+        case .paper:
+            return "doc.text"
+        case .unknown:
+            return "questionmark.circle"
+        }
+    }
+
     private var iconColor: Color {
         switch viewModel.detectedSurfaceType {
+        case .screen:
+            return .green
+        case .chassis:
+            return .gray
         case .metal:
             return .orange
         case .plastic:
             return .blue
         case .glass:
             return .cyan
-        case .screen:
-            return .green
         case .paper:
             return .yellow
         case .unknown:

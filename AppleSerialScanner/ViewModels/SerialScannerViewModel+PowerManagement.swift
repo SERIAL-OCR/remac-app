@@ -8,7 +8,7 @@ import Foundation
 import UIKit
 
 // MARK: - PowerManagementDelegate
-extension SerialScannerViewModel: PowerManagementDelegate {
+extension SerialScannerViewModel: @preconcurrency PowerManagementDelegate {
     func powerManagementDidEnablePowerSaving() {
         DispatchQueue.main.async { [weak self] in
             self?.isPowerSavingModeActive = true

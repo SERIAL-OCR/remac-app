@@ -176,3 +176,55 @@ extension AnalyticsDashboardData {
         // that track rejection patterns and validation performance
     }
 }
+
+/// Analytics models for consensus-based serial number recognition
+struct ConsensusAnalytics {
+    /// Represents a serial number candidate with confidence and timing data
+    struct SerialCandidate {
+        let text: String
+        let confidence: Float
+        let timestamp: TimeInterval
+    }
+    
+    /// Represents the stability state of consensus building
+    enum StabilityState {
+        case unstable
+        case accumulating
+        case stabilizing
+        case stable
+        case locked
+    }
+    
+    /// Represents a consensus result with stability state and confidence
+    struct ConsensusResult {
+        let stabilityState: StabilityState
+        let consensus: SerialConsensus?
+        let overallConfidence: Float
+        let frameCount: Int
+    }
+    
+    /// Represents a confirmed serial number consensus
+    struct SerialConsensus {
+        let serialText: String
+        let overallConfidence: Float
+        let stabilityDuration: TimeInterval
+        let frameCount: Int
+    }
+}
+
+/// Analytics data for consensus processing
+struct ConsensusAnalyticsData {
+    let totalFrames: Int
+    let stableFrames: Int
+    let averageConfidence: Float
+    let processingTime: TimeInterval
+    let stabilityEvents: [StabilityEvent]
+}
+
+/// Represents a change in stability state
+struct StabilityEvent {
+    let timestamp: Date
+    let previousState: ConsensusAnalytics.StabilityState
+    let newState: ConsensusAnalytics.StabilityState
+    let triggerCondition: String
+}

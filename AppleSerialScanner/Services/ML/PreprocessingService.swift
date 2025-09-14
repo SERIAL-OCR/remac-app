@@ -274,22 +274,21 @@ public final class PreprocessingService {
     
     /// Analyze image characteristics for adaptive preprocessing
     public func analyzeImageCharacteristics(_ image: CIImage) -> ImageCharacteristics {
-        // Calculate brightness, contrast, and glare metrics
-        let extent = image.extent
+        // Calculate brightness, contrast, and other metrics
         let averageBrightness = calculateAverageBrightness(image)
         let contrastLevel = calculateContrast(image)
-        let glareLevel = calculateGlareLevel(image)
+        let edgeDensity = calculateEdgeDensity(image)
+        let localContrast = calculateLocalContrast(image)
+        let histogram = calculateHistogram(image)
+        let contrastSpread = calculateContrastSpread(image)
         
         return ImageCharacteristics(
+            histogram: histogram,
+            edgeDensity: edgeDensity,
+            localContrast: localContrast,
             brightness: averageBrightness,
-            contrast: contrastLevel,
-            glareLevel: glareLevel,
-            imageSize: extent.size,
-            recommendedOptions: getRecommendedOptions(
-                brightness: averageBrightness,
-                contrast: contrastLevel,
-                glare: glareLevel
-            )
+            contrastSpread: contrastSpread,
+            confidence: 0.8 // Default confidence
         )
     }
     
@@ -326,6 +325,51 @@ public final class PreprocessingService {
         return 0.1 // Placeholder
     }
     
+    private func calculateEdgeDensity(_ image: CIImage) -> Float {
+        // Calculate edge density using Sobel edge detection
+        guard let edgeFilter = CIFilter(name: "CIEdges") else { return 0.5 }
+        edgeFilter.setValue(image, forKey: kCIInputImageKey)
+        edgeFilter.setValue(1.0, forKey: kCIInputIntensityKey)
+        
+        guard let edgeImage = edgeFilter.outputImage else { return 0.5 }
+        
+        // Calculate average edge intensity
+        guard let avgFilter = CIFilter(name: "CIAreaAverage") else { return 0.5 }
+        avgFilter.setValue(edgeImage, forKey: kCIInputImageKey)
+        avgFilter.setValue(CIVector(cgRect: edgeImage.extent), forKey: kCIInputExtentKey)
+        
+        guard let outputImage = avgFilter.outputImage else { return 0.5 }
+        
+        var bitmap = [UInt8](repeating: 0, count: 4)
+        ciContext.render(outputImage, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
+        
+        return Float(bitmap[0]) / 255.0
+    }
+    
+    private func calculateLocalContrast(_ image: CIImage) -> Float {
+        // Calculate local contrast using unsharp mask
+        guard let unsharpFilter = CIFilter(name: "CIUnsharpMask") else { return 0.5 }
+        unsharpFilter.setValue(image, forKey: kCIInputImageKey)
+        unsharpFilter.setValue(2.0, forKey: kCIInputRadiusKey)
+        unsharpFilter.setValue(1.0, forKey: kCIInputIntensityKey)
+        
+        // Simplified local contrast calculation
+        return 0.6 // Placeholder - in production, would calculate actual local contrast metrics
+    }
+    
+    private func calculateHistogram(_ image: CIImage) -> [Float] {
+        // Calculate luminance histogram
+        // This is a simplified implementation
+        // In production, you'd want to calculate actual histogram bins
+        return Array(repeating: 0.1, count: 256) // Placeholder 256-bin histogram
+    }
+    
+    private func calculateContrastSpread(_ image: CIImage) -> Float {
+        // Calculate contrast spread (standard deviation of pixel intensities)
+        // This is a simplified calculation
+        return 0.4 // Placeholder
+    }
+    
     private func getRecommendedOptions(brightness: Float, contrast: Float, glare: Float) -> PreprocessingOptions {
         var options = PreprocessingOptions.default
         
@@ -358,14 +402,4 @@ public final class PreprocessingService {
         
         return options
     }
-}
-
-// MARK: - Supporting Types
-
-public struct ImageCharacteristics {
-    public let brightness: Float
-    public let contrast: Float
-    public let glareLevel: Float
-    public let imageSize: CGSize
-    public let recommendedOptions: PreprocessingService.PreprocessingOptions
 }

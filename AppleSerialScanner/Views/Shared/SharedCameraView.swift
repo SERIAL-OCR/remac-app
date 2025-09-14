@@ -185,5 +185,5 @@ class CameraContainerNSView: NSView {
 }
 #endif
 
-// This typealias maintains compatibility with existing code
-typealias CameraPreviewView = SharedCameraView
+// Note: Do not alias CameraPreviewView here to avoid duplicate symbol with other camera preview wrappers
+// If a shared alias is required, consolidate the implementation in a single file.

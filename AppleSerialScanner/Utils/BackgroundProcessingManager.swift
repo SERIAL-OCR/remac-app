@@ -1,7 +1,11 @@
 import Foundation
 import Vision
 import CoreImage
+#if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 /// Manages background processing tasks to improve performance and prevent UI blocking
 class BackgroundProcessingManager {

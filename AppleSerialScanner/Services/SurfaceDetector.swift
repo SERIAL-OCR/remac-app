@@ -2,40 +2,6 @@ import Foundation
 @preconcurrency import CoreImage
 import Vision
 
-/// Surface types that can be detected for optimized OCR settings
-enum SurfaceType: String, Codable {
-    case metal      // Reflective, etched/engraved serials (MacBooks, iPads)
-    case plastic    // Smooth, printed/molded serials (chargers, cases)
-    case glass      // Transparent surfaces (screen protectors, displays)
-    case screen     // Digital displays (device screens, monitors)
-    case paper      // Printed labels, documentation
-    case unknown    // Cannot determine surface type
-
-    /// Human-readable description for UI display
-    var description: String {
-        switch self {
-        case .metal: return "Metal Surface"
-        case .plastic: return "Plastic Surface"
-        case .glass: return "Glass Surface"
-        case .screen: return "Screen Display"
-        case .paper: return "Paper Label"
-        case .unknown: return "Analyzing..."
-        }
-    }
-
-    /// Icon name for UI representation
-    var iconName: String {
-        switch self {
-        case .metal: return "cylinder.fill"
-        case .plastic: return "square.stack.3d.up.fill"
-        case .glass: return "circle.hexagonpath.fill"
-        case .screen: return "display"
-        case .paper: return "doc.text.fill"
-        case .unknown: return "questionmark.circle.fill"
-        }
-    }
-}
-
 /// Material-specific OCR settings for optimal recognition
 struct OCRSettings {
     var contrast: Float
@@ -92,6 +58,17 @@ struct OCRSettings {
                 recognitionLevel: .fast
             )
 
+        case .chassis:
+            // Device chassis/body surfaces, similar to metal but with different characteristics
+            return OCRSettings(
+                contrast: 1.7,
+                brightness: 1.0,
+                sharpness: 2.2,
+                threshold: 0.72,
+                minimumTextHeight: 0.009,
+                recognitionLevel: .accurate
+            )
+
         case .paper:
             // Paper labels need good contrast but lower sharpness
             return OCRSettings(
@@ -143,10 +120,11 @@ class SurfaceDetector {
     /// Detect surface type from a camera frame
     func detectSurface(in image: CIImage, completion: @escaping (SurfaceDetectionResult) -> Void) {
         let imageCopy = image // Copy to avoid capturing non-Sendable type
-        detectionQueue.async { [weak self] in
-            guard let self = self else { return }
-
-            let result = self.analyzeSurface(in: imageCopy)
+        let contextCopy = self.context // Capture context to avoid actor isolation
+        
+        detectionQueue.async {
+            // Create a non-main-actor context for analysis
+            let result = SurfaceDetector.performAnalysisStatic(in: imageCopy, context: contextCopy)
             DispatchQueue.main.async {
                 completion(result)
             }
@@ -162,8 +140,8 @@ class SurfaceDetector {
     /// Core surface analysis algorithm
     private func analyzeSurface(in image: CIImage) -> SurfaceDetectionResult {
         let features = extractFeatures(from: image)
-        let surfaceType = classifySurface(features: features)
-        let confidence = calculateConfidence(features: features, for: surfaceType)
+        let surfaceType = SurfaceDetector.classifySurface(features: features)
+        let confidence = SurfaceDetector.calculateConfidence(features: features, for: surfaceType)
 
         return SurfaceDetectionResult(
             surfaceType: surfaceType,
@@ -195,8 +173,32 @@ class SurfaceDetector {
         )
     }
 
-    /// Classify surface type based on extracted features
-    private func classifySurface(features: SurfaceFeatures) -> SurfaceType {
+    // MARK: - Static Methods for Background Processing
+    
+    /// Static feature extraction to avoid concurrency issues
+    private nonisolated static func extractFeaturesStatic(from image: CIImage, context: CIContext) -> SurfaceFeatures {
+        // Get basic image statistics with error handling
+        let brightness = (try? calculateAverageBrightnessStaticSafe(of: image, context: context)) ?? 0.5
+        let contrast = calculateLocalContrastStaticSafe(of: image, context: context)
+        let edgeSharpness = calculateEdgeSharpnessStaticSafe(of: image, context: context)
+
+        // Analyze reflectivity through highlight patterns
+        let reflectivity = analyzeReflectivityStaticSafe(of: image, context: context)
+
+        // Analyze texture through noise patterns
+        let texture = analyzeTextureStaticSafe(of: image, context: context)
+
+        return SurfaceFeatures(
+            reflectivity: reflectivity,
+            texture: texture,
+            contrast: contrast,
+            brightness: brightness,
+            edgeSharpness: edgeSharpness
+        )
+    }
+    
+    /// Static classification method
+    private nonisolated static func classifySurface(features: SurfaceFeatures) -> SurfaceType {
         // Metal detection: High reflectivity, high contrast, sharp edges
         if features.reflectivity > 0.7 && features.edgeSharpness > 0.8 {
             return .metal
@@ -225,9 +227,9 @@ class SurfaceDetector {
 
         return .unknown
     }
-
-    /// Calculate confidence score for the classification
-    private func calculateConfidence(features: SurfaceFeatures, for surfaceType: SurfaceType) -> Float {
+    
+    /// Static confidence calculation
+    private nonisolated static func calculateConfidence(features: SurfaceFeatures, for surfaceType: SurfaceType) -> Float {
         switch surfaceType {
         case .metal:
             return min(1.0, (features.reflectivity + features.edgeSharpness) / 2.0)
@@ -241,6 +243,9 @@ class SurfaceDetector {
         case .plastic:
             return 0.7 // Conservative confidence for plastic
 
+        case .chassis:
+            return min(1.0, (features.reflectivity * 0.6 + features.edgeSharpness * 0.4))
+
         case .paper:
             return 0.6 // Conservative confidence for paper
 
@@ -248,83 +253,27 @@ class SurfaceDetector {
             return 0.0
         }
     }
-
-    // MARK: - Feature Extraction Methods
+    
+    // MARK: - Instance Methods for Feature Extraction
 
     private func calculateAverageBrightness(of image: CIImage) -> Float {
-        // Use CIAreaAverage filter for much better performance
-        guard let averageFilter = CIFilter(name: "CIAreaAverage") else {
-            return 0.5
-        }
-
-        averageFilter.setValue(image, forKey: kCIInputImageKey)
-
-        guard let outputImage = averageFilter.outputImage,
-              let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else {
-            return 0.5
-        }
-
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let bytesPerPixel = 4
-        let bytesPerRow = bytesPerPixel
-        let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue
-
-        guard let context = CGContext(data: nil,
-                                    width: 1,
-                                    height: 1,
-                                    bitsPerComponent: 8,
-                                    bytesPerRow: bytesPerRow,
-                                    space: colorSpace,
-                                    bitmapInfo: bitmapInfo) else {
-            return 0.5
-        }
-
-        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: 1, height: 1))
-
-        guard let pixelData = context.data else {
-            return 0.5
-        }
-
-        // Bind the raw pointer to a typed buffer for subscripting
-        let buffer = pixelData.bindMemory(to: UInt8.self, capacity: 4)
-        let r = Float(buffer[0]) / 255.0
-        let g = Float(buffer[1]) / 255.0
-        let b = Float(buffer[2]) / 255.0
-
-        // Calculate luminance using standard formula
-        return 0.299 * r + 0.587 * g + 0.114 * b
+        return SurfaceDetector.calculateAverageBrightnessStatic(of: image, context: context)
     }
 
     private func calculateLocalContrast(of image: CIImage) -> Float {
-        // Simplified local contrast calculation
-        // In a real implementation, this would use more sophisticated algorithms
-        let brightness = calculateAverageBrightness(of: image)
-
-        // Estimate contrast based on brightness variation
-        // This is a simplified version - production would use edge detection
-        return min(1.0, brightness * 1.5)
+        return SurfaceDetector.calculateLocalContrastStaticSafe(of: image, context: context)
     }
 
     private func calculateEdgeSharpness(of image: CIImage) -> Float {
-        // Simplified edge sharpness calculation
-        // Production implementation would use Sobel/Canny edge detection
-        let contrast = calculateLocalContrast(of: image)
-        return min(1.0, contrast * 1.2)
+        return SurfaceDetector.calculateEdgeSharpnessStaticSafe(of: image, context: context)
     }
 
     private func analyzeReflectivity(of image: CIImage) -> Float {
-        let brightness = calculateAverageBrightness(of: image)
-        let contrast = calculateLocalContrast(of: image)
-
-        // High brightness with high contrast often indicates reflectivity
-        return min(1.0, (brightness * 0.7) + (contrast * 0.3))
+        return SurfaceDetector.analyzeReflectivityStaticSafe(of: image, context: context)
     }
 
     private func analyzeTexture(of image: CIImage) -> Float {
-        // Simplified texture analysis
-        // Production would use GLCM or wavelet analysis
-        let contrast = calculateLocalContrast(of: image)
-        return min(1.0, contrast * 0.8)
+        return SurfaceDetector.analyzeTextureStaticSafe(of: image, context: context)
     }
 
     // MARK: - Safe Methods with Error Handling
@@ -371,6 +320,105 @@ class SurfaceDetector {
         } catch {
             return 0.5
         }
+    }
+
+    /// Static analysis method to avoid concurrency issues
+    private nonisolated static func performAnalysisStatic(in image: CIImage, context: CIContext) -> SurfaceDetectionResult {
+        let features = extractFeaturesStatic(from: image, context: context)
+        let surfaceType = classifySurface(features: features)
+        let confidence = calculateConfidence(features: features, for: surfaceType)
+
+        return SurfaceDetectionResult(
+            surfaceType: surfaceType,
+            confidence: confidence,
+            features: features,
+            timestamp: Date()
+        )
+    }
+    
+    // MARK: - Static Safe Methods
+    
+    nonisolated private static func calculateAverageBrightnessStaticSafe(of image: CIImage, context: CIContext) throws -> Float {
+        guard image.extent.width > 0 && image.extent.height > 0 else {
+            throw SurfaceDetectionError.invalidImageSize
+        }
+
+        return calculateAverageBrightnessStatic(of: image, context: context)
+    }
+    
+    nonisolated private static func calculateLocalContrastStaticSafe(of image: CIImage, context: CIContext) -> Float {
+        do {
+            return try calculateAverageBrightnessStaticSafe(of: image, context: context) * 1.5
+        } catch {
+            return 0.5
+        }
+    }
+
+    nonisolated private static func calculateEdgeSharpnessStaticSafe(of image: CIImage, context: CIContext) -> Float {
+        do {
+            let contrast = try calculateAverageBrightnessStaticSafe(of: image, context: context)
+            return min(1.0, contrast * 1.2)
+        } catch {
+            return 0.5
+        }
+    }
+
+    nonisolated private static func analyzeReflectivityStaticSafe(of image: CIImage, context: CIContext) -> Float {
+        do {
+            let brightness = try calculateAverageBrightnessStaticSafe(of: image, context: context)
+            let contrast = calculateLocalContrastStaticSafe(of: image, context: context)
+            return min(1.0, (brightness * 0.7) + (contrast * 0.3))
+        } catch {
+            return 0.5
+        }
+    }
+
+    nonisolated private static func analyzeTextureStaticSafe(of image: CIImage, context: CIContext) -> Float {
+        do {
+            let contrast = try calculateAverageBrightnessStaticSafe(of: image, context: context)
+            return min(1.0, contrast * 0.8)
+        } catch {
+            return 0.5
+        }
+    }
+    
+    // MARK: - Static Analysis Methods
+    
+    nonisolated static func calculateAverageBrightnessStatic(of image: CIImage, context: CIContext) -> Float {
+        let extent = image.extent
+        guard !extent.isEmpty else { return 0.0 }
+        
+        // Create a histogram filter to analyze brightness
+        guard let histogramFilter = CIFilter(name: "CIAreaHistogram") else {
+            return 0.0
+        }
+        
+        histogramFilter.setValue(image, forKey: kCIInputImageKey)
+        histogramFilter.setValue(CIVector(x: extent.origin.x, y: extent.origin.y, z: extent.size.width, w: extent.size.height), forKey: "inputExtent")
+        histogramFilter.setValue(1, forKey: "inputScale")
+        histogramFilter.setValue(256, forKey: "inputCount")
+        
+        guard let histogramImage = histogramFilter.outputImage else {
+            return 0.0
+        }
+        
+        // Convert histogram to data
+        let histogramData = UnsafeMutablePointer<UInt8>.allocate(capacity: 256 * 4)
+        defer { histogramData.deallocate() }
+        
+        context.render(histogramImage, toBitmap: histogramData, rowBytes: 256 * 4, bounds: CGRect(x: 0, y: 0, width: 256, height: 1), format: .RGBA8, colorSpace: nil)
+        
+        // Calculate average brightness
+        var totalBrightness: Float = 0.0
+        var totalPixels: Float = 0.0
+        
+        for i in 0..<256 {
+            let pixelCount = Float(histogramData[i * 4]) // Red channel contains the count
+            totalBrightness += Float(i) * pixelCount / 255.0
+            totalPixels += pixelCount
+        }
+        
+        return totalPixels > 0 ? totalBrightness / totalPixels : 0.0
     }
 }
 

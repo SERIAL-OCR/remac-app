@@ -1,5 +1,9 @@
 import Foundation
+#if os(iOS)
 import UIKit
+#else
+import AppKit
+#endif
 import AVFoundation
 import Vision
 
@@ -9,8 +13,16 @@ class PowerManagementService: ObservableObject {
     // MARK: - Published Properties
     @Published var isLowPowerModeEnabled = false
     @Published var batteryLevel: Float = 1.0
-    @Published var batteryState: UIDevice.BatteryState = .unknown
+    @Published var batteryState: BatteryState = .unknown
     @Published var thermalState: ProcessInfo.ThermalState = .nominal
+    
+    // MARK: - Cross-platform Battery State
+    enum BatteryState {
+        case unknown
+        case unplugged
+        case charging
+        case full
+    }
     
     // MARK: - Power Management Settings
     private var powerSavingThreshold: Float = 0.20 // Enable power saving at 20% battery
@@ -97,7 +109,19 @@ class PowerManagementService: ObservableObject {
             
             #if os(iOS)
             self.batteryLevel = UIDevice.current.batteryLevel
-            self.batteryState = UIDevice.current.batteryState
+            // Convert UIDevice.BatteryState to our custom BatteryState
+            switch UIDevice.current.batteryState {
+            case .charging:
+                self.batteryState = .charging
+            case .full:
+                self.batteryState = .full
+            case .unplugged:
+                self.batteryState = .unplugged
+            case .unknown:
+                self.batteryState = .unknown
+            @unknown default:
+                self.batteryState = .unknown
+            }
             #else
             // For macOS, assume good battery status
             self.batteryLevel = 1.0

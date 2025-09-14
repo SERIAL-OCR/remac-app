@@ -1,5 +1,9 @@
 import Vision
+#if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 /// Specialized Vision configuration for Apple serial number recognition
 struct SerialTextRecognitionOptimizer {
@@ -8,7 +12,7 @@ struct SerialTextRecognitionOptimizer {
     /// - Parameters:
     ///   - request: The text recognition request to optimize
     ///   - isIPad: Whether the device is an iPad (for device-specific optimizations)
-    static func optimizeForSerialNumbers(_ request: VNRecognizeTextRequest, isIPad: Bool = UIDevice.current.userInterfaceIdiom == .pad) {
+    static func optimizeForSerialNumbers(_ request: VNRecognizeTextRequest, isIPad: Bool = false) {
         // Use accurate recognition for serial numbers
         request.recognitionLevel = .accurate
         
