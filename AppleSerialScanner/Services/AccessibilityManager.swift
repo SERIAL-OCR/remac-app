@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import AVFoundation
+import os.log
 
 /// Manages accessibility features and voice guidance for the scanner
 class AccessibilityManager: ObservableObject {
@@ -8,12 +9,12 @@ class AccessibilityManager: ObservableObject {
     private let logger = Logger(subsystem: "com.appleserialscanner", category: "Accessibility")
     
     // MARK: - Published Properties
-    
-    @Published var isVoiceGuidanceEnabled = true
-    @Published var isHapticFeedbackEnabled = true
-    @Published var isHighContrastModeEnabled = false
+
+    @Published var isVoiceGuidanceEnabled: Bool = true
+    @Published var isHapticFeedbackEnabled: Bool = true
+    @Published var isHighContrastModeEnabled: Bool = false
     @Published var currentVoiceGuidance: String = ""
-    
+
     // Voice settings
     private let voiceRate: Float = 0.5
     private let voicePitch: Float = 1.0
@@ -24,17 +25,32 @@ class AccessibilityManager: ObservableObject {
     private var lastGuidanceTime: Date = Date()
     
     // Haptic generators
+    #if canImport(UIKit)
     private let lightHaptic = UIImpactFeedbackGenerator(style: .light)
     private let mediumHaptic = UIImpactFeedbackGenerator(style: .medium)
     private let heavyHaptic = UIImpactFeedbackGenerator(style: .heavy)
     private let notificationHaptic = UINotificationFeedbackGenerator()
-    
+    #else
+    // On platforms without UIKit (macOS) provide no-op placeholders
+    private struct NoopHaptic {
+        func prepare() {}
+        func impactOccurred(intensity: Double = 1.0) {}
+        func impactOccurred() {}
+        // Accept optional param to avoid requiring UIKit enum values on macOS
+        func notificationOccurred(_ _: Any? = nil) {}
+    }
+    private let lightHaptic = NoopHaptic()
+    private let mediumHaptic = NoopHaptic()
+    private let heavyHaptic = NoopHaptic()
+    private let notificationHaptic = NoopHaptic()
+    #endif
+
     init() {
         setupHaptics()
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Provide voice guidance for current state
     func provideGuidance(for state: FeedbackState, message: String) {
         guard isVoiceGuidanceEnabled else { return }
@@ -56,7 +72,11 @@ class AccessibilityManager: ObservableObject {
     /// Provide success feedback
     func signalSuccess() {
         if isHapticFeedbackEnabled {
+            #if canImport(UIKit)
             notificationHaptic.notificationOccurred(.success)
+            #else
+            notificationHaptic.notificationOccurred()
+            #endif
         }
         
         if isVoiceGuidanceEnabled {
@@ -67,7 +87,11 @@ class AccessibilityManager: ObservableObject {
     /// Provide error feedback
     func signalError(message: String) {
         if isHapticFeedbackEnabled {
+            #if canImport(UIKit)
             notificationHaptic.notificationOccurred(.error)
+            #else
+            notificationHaptic.notificationOccurred()
+            #endif
         }
         
         if isVoiceGuidanceEnabled {
@@ -100,20 +124,33 @@ class AccessibilityManager: ObservableObject {
     
     /// Get accessible text size
     func accessibleFontSize(_ baseSize: CGFloat) -> CGFloat {
+        #if canImport(UIKit)
         let contentSize = UIApplication.shared.preferredContentSizeCategory
         let sizeMultiplier = contentSize.isAccessibilityCategory ? 1.5 : 1.0
         return baseSize * sizeMultiplier
+        #else
+        // macOS: return base size (no dynamic type)
+        return baseSize
+        #endif
     }
-    
+
     // MARK: - Private Methods
     
     private func setupHaptics() {
+        #if canImport(UIKit)
         lightHaptic.prepare()
         mediumHaptic.prepare()
         heavyHaptic.prepare()
         notificationHaptic.prepare()
+        #else
+        // no-op on macOS
+        lightHaptic.prepare()
+        mediumHaptic.prepare()
+        heavyHaptic.prepare()
+        notificationHaptic.prepare()
+        #endif
     }
-    
+
     private func speakGuidance(_ message: String) {
         // Stop any current speech
         synthesizer.stopSpeaking(at: .immediate)
@@ -128,19 +165,29 @@ class AccessibilityManager: ObservableObject {
         
         synthesizer.speak(utterance)
     }
-    
+
     private func provideFeedback(for state: FeedbackState) {
         switch state {
         case .ready:
             lightHaptic.impactOccurred()
         case .success:
+            // Notification feedback maps to appropriate call on UIKit; on macOS this is a noop
+            #if canImport(UIKit)
             notificationHaptic.notificationOccurred(.success)
+            #else
+            notificationHaptic.notificationOccurred()
+            #endif
         case .error:
+            #if canImport(UIKit)
             notificationHaptic.notificationOccurred(.error)
+            #else
+            notificationHaptic.notificationOccurred()
+            #endif
         case .unstable:
             mediumHaptic.impactOccurred()
         case .poorQuality, .poorLighting:
-            lightHaptic.impactOccurred(intensity: 0.5)
+            // impactOccurred(intensity:) exists only on some platforms; keep conservative call
+            lightHaptic.impactOccurred()
         default:
             break
         }
@@ -173,28 +220,47 @@ extension View {
     }
 }
 
-/// Modifier for adding accessibility guidance
-struct AccessibilityGuidanceModifier: ViewModifier {
-    let message: String
-    let importance: AccessibilityImportance
-    
-    func body(content: Content) -> some View {
-        content
-            .accessibility(label: Text(message))
-            .accessibility(addTraits: importance == .high ? .isHeader : [])
-    }
-}
-
 /// Modifier for scanner-specific accessibility
 struct ScannerAccessibilityModifier: ViewModifier {
     let isEnabled: Bool
     let hint: String?
-    
+
     func body(content: Content) -> some View {
-        content
-            .accessibility(enabled: isEnabled)
-            .accessibility(addTraits: .updatesFrequently)
-            .accessibility(hint: hint.map(Text.init))
+        if let hint = hint {
+            return AnyView(
+                content
+                    .accessibility(hidden: !isEnabled)
+                    .accessibility(addTraits: .updatesFrequently)
+                    .accessibilityHint(Text(hint))
+            )
+        } else {
+            return AnyView(
+                content
+                    .accessibility(hidden: !isEnabled)
+                    .accessibility(addTraits: .updatesFrequently)
+            )
+        }
+    }
+}
+
+/// Modifier for adding accessibility guidance
+struct AccessibilityGuidanceModifier: ViewModifier {
+    let message: String
+    let importance: AccessibilityImportance
+
+    func body(content: Content) -> some View {
+        if importance == .high {
+            return AnyView(
+                content
+                    .accessibility(label: Text(message))
+                    .accessibility(addTraits: .isHeader)
+            )
+        } else {
+            return AnyView(
+                content
+                    .accessibility(label: Text(message))
+            )
+        }
     }
 }
 
@@ -208,18 +274,23 @@ enum AccessibilityImportance {
 
 extension Color {
     func saturated(by amount: Double) -> Color {
-        guard let components = UIColor(self).cgColor.components else {
-            return self
+        #if canImport(UIKit)
+        if let ui = UIColor(self).cgColor.components, ui.count >= 3 {
+            let red = pow(ui[0], 1/amount)
+            let green = pow(ui[1], 1/amount)
+            let blue = pow(ui[2], 1/amount)
+            return Color(red: Double(red), green: Double(green), blue: Double(blue))
         }
-        
-        let red = pow(components[0], 1/amount)
-        let green = pow(components[1], 1/amount)
-        let blue = pow(components[2], 1/amount)
-        
-        return Color(
-            red: Double(red),
-            green: Double(green),
-            blue: Double(blue)
-        )
+        return self
+        #elseif canImport(AppKit)
+        let ns = NSColor(self)
+        guard let rgb = ns.usingColorSpace(.deviceRGB) else { return self }
+        let red = pow(Double(rgb.redComponent), 1/amount)
+        let green = pow(Double(rgb.greenComponent), 1/amount)
+        let blue = pow(Double(rgb.blueComponent), 1/amount)
+        return Color(red: red, green: green, blue: blue)
+        #else
+        return self
+        #endif
     }
 }

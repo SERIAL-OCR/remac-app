@@ -3,7 +3,8 @@ import Vision
 import CoreImage
 #if canImport(UIKit)
 import UIKit
-#elseif canImport(AppKit)
+#endif
+#if canImport(AppKit)
 import AppKit
 #endif
 

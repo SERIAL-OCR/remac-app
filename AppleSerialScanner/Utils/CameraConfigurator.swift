@@ -1,8 +1,13 @@
 import Foundation
 import AVFoundation
-import UIKit
 import CoreMedia
 import CoreVideo
+
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 class CameraConfigurator {
     

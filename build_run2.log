@@ -1,0 +1,726 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project AppleSerialScanner.xcodeproj -scheme AppleSerialScanner -configuration Debug -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 16" clean build
+
+Build settings from command line:
+    SDKROOT = iphonesimulator18.5
+
+ComputePackagePrebuildTargetDependencyGraph
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+** CLEAN SUCCEEDED **
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'AppleSerialScanner' in project 'AppleSerialScanner' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 96199c9ca1a8bd3aa5175905726c163e
+Build description path: /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/XCBuildData/96199c9ca1a8bd3aa5175905726c163e.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk /Users/apple/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache
+    cd /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -o /Users/apple/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache
+
+CreateBuildDirectory /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products
+    cd /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner.xcodeproj
+    builtin-create-build-directory /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products
+
+CreateBuildDirectory /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex
+    cd /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner.xcodeproj
+    builtin-create-build-directory /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex
+
+CreateBuildDirectory /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator
+    cd /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner.xcodeproj
+    builtin-create-build-directory /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner-6d749e2d778140c4a551d41e3c9c49d2-VFS-iphonesimulator/all-product-headers.yaml
+    cd /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner.xcodeproj
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner-6d749e2d778140c4a551d41e3c9c49d2-VFS-iphonesimulator/all-product-headers.yaml
+
+CreateBuildDirectory /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+    cd /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner.xcodeproj
+    builtin-create-build-directory /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/empty-AppleSerialScanner.plist (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/empty-AppleSerialScanner.plist
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.hmap (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.hmap
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/DerivedSources/Entitlements-Simulated.plist (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/DerivedSources/Entitlements-Simulated.plist
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner.SwiftFileList (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner.SwiftFileList
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner.SwiftConstValuesFileList (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner_const_extract_protocols.json (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner-OutputFileMap.json (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner.LinkFileList (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner.LinkFileList
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.DependencyStaticMetadataFileList (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.DependencyMetadataFileList (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-project-headers.hmap (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-project-headers.hmap
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-own-target-headers.hmap (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-generated-files.hmap (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-generated-files.hmap
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-all-target-headers.hmap (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-all-non-framework-target-headers.hmap (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-DebugDylibPath-normal-arm64.txt (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-DebugDylibInstallName-normal-arm64.txt (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    write-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-DebugDylibInstallName-normal-arm64.txt
+
+MkDir /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    /bin/mkdir -p /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app
+
+ProcessProductPackaging /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/AppleSerialScanner.entitlements /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app.xcent (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+    Entitlements:
+    
+    {
+}
+    
+    builtin-productPackagingUtility /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/AppleSerialScanner.entitlements -entitlements -format xml -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app.xcent
+
+ProcessProductPackaging /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/AppleSerialScanner.entitlements /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app-Simulated.xcent (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+    Entitlements:
+    
+    {
+    "application-identifier" = "NLN6NXQ49C.amanmogal.AppleSerialScanner";
+}
+    
+    builtin-productPackagingUtility /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/AppleSerialScanner.entitlements -entitlements -format xml -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app-Simulated.xcent
+
+ProcessProductPackagingDER /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app-Simulated.xcent /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app-Simulated.xcent.der (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    /usr/bin/derq query -f xml -i /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app-Simulated.xcent -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app-Simulated.xcent.der --raw
+
+ProcessProductPackagingDER /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app.xcent /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app.xcent.der (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    /usr/bin/derq query -f xml -i /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app.xcent -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app.xcent.der --raw
+
+ProcessInfoPlistFile /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app/Info.plist /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/empty-AppleSerialScanner.plist (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    builtin-infoPlistUtility /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/empty-AppleSerialScanner.plist -producttype com.apple.product-type.application -genpkginfo /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app/PkgInfo -expandbuildsettings -format binary -platform iphonesimulator -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app/Info.plist
+
+Ld /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app/__preview.dylib normal (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios18-simulator -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -O0 -L/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator -F/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator -install_name @rpath/AppleSerialScanner.debug.dylib -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner_dependency_info.dat -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app-Simulated.xcent -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __ents_der -Xlinker /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner.app-Simulated.xcent.der -Xlinker -no_adhoc_codesign -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app/__preview.dylib
+
+CpResource /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app/plan.md /Users/apple/Documents/AppleSerialScanner/plan.md (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/apple/Documents/AppleSerialScanner/plan.md /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app
+
+CpResource /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app/README.md /Users/apple/Documents/AppleSerialScanner/README.md (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/apple/Documents/AppleSerialScanner/README.md /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/AppleSerialScanner.app
+
+SwiftDriver AppleSerialScanner normal arm64 com.apple.xcode.tools.swift.compiler (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name AppleSerialScanner -Onone -enforce-exclusivity\=checked @/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios18-simulator -g -module-cache-path /Users/apple/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Index.noindex/DataStore -swift-version 5 -I /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator -F /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/apple/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache -output-file-map /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/apple/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner_const_extract_protocols.json -Xcc -iquote -Xcc /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-generated-files.hmap -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-own-target-headers.hmap -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-all-target-headers.hmap -Xcc -iquote -Xcc /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-project-headers.hmap -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/DerivedSources-normal/arm64 -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/DerivedSources/arm64 -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner-Swift.h -working-directory /Users/apple/Documents/AppleSerialScanner -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ Untitled.swift,\ CameraControlService.swift,\ PerformanceMetricsView.swift,\ AnalyticsDashboardData.swift,\ PowerManagementService.swift,\ HealthMonitoringService.swift,\ NumbersTemplate.swift,\ SerialOCREnhancer.swift,\ SystemStats.swift,\ CameraPreviewView.swift,\ UIFeedbackManager.swift,\ SerialRegionDetector.swift,\ BatchProcessor.swift,\ LightingIndicatorView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/Untitled.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/CameraControlService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/PerformanceMetricsView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsDashboardData.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/PowerManagementService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/HealthMonitoringService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/NumbersTemplate.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialOCREnhancer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SystemStats.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CameraPreviewView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/UIFeedbackManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/SerialRegionDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BatchProcessor.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/Untitled.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/CameraControlService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/PerformanceMetricsView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsDashboardData.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/PowerManagementService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/HealthMonitoringService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/NumbersTemplate.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialOCREnhancer.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SystemStats.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CameraPreviewView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CameraPreviewView.swift:25:34: warning: 'videoOrientation' was deprecated in iOS 17.0: Use -videoRotationAngle instead
+        previewLayer.connection?.videoOrientation = .portrait
+                                 ^
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/UIFeedbackManager.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/SerialRegionDetector.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/SerialRegionDetector.swift:298:17: warning: initialization of immutable value 'normalizedWidth' was never used; consider replacing with assignment to '_' or removing it
+            let normalizedWidth = box.width / imageSize.width
+            ~~~~^~~~~~~~~~~~~~~
+            _
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BatchProcessor.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BatchProcessor.swift:164:27: error: value of type 'SerialScannerViewModel' has no member 'accessoryPresetManager'
+        scannerViewModel?.accessoryPresetManager.selectedAccessoryType = item.deviceType
+        ~~~~~~~~~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BatchProcessor.swift:167:27: error: value of type 'SerialScannerViewModel' has no member 'handleAccessoryPresetChange'
+        scannerViewModel?.handleAccessoryPresetChange()
+        ~~~~~~~~~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BatchProcessor.swift:251:31: error: value of type 'SerialScannerViewModel' has no member 'accessoryPresetManager'
+            scannerViewModel?.accessoryPresetManager.selectedAccessoryType = alternativePreset
+            ~~~~~~~~~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BatchProcessor.swift:252:31: error: value of type 'SerialScannerViewModel' has no member 'handleAccessoryPresetChange'
+            scannerViewModel?.handleAccessoryPresetChange()
+            ~~~~~~~~~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:10:67: error: cannot convert value of type 'Binding<Subject>' to expected argument type 'String'
+            Image(systemName: viewModel.detectedLightingCondition.iconName)
+                                                                  ^
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:10:41: error: value of type 'SerialScannerViewModel' has no dynamic member 'detectedLightingCondition' using key path from root type 'SerialScannerViewModel'
+            Image(systemName: viewModel.detectedLightingCondition.iconName)
+                              ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:10:31: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+            Image(systemName: viewModel.detectedLightingCondition.iconName)
+                              ^
+                              $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:52:28: error: value of type 'SerialScannerViewModel' has no dynamic member 'isLightingDetectionEnabled' using key path from root type 'SerialScannerViewModel'
+        .opacity(viewModel.isLightingDetectionEnabled ? 1.0 : 0.6)
+                 ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:52:18: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+        .opacity(viewModel.isLightingDetectionEnabled ? 1.0 : 0.6)
+                 ^
+                 $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:52:28: error: cannot convert value of type 'Binding<Subject>' to expected condition type 'Bool'
+        .opacity(viewModel.isLightingDetectionEnabled ? 1.0 : 0.6)
+                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:53:10: error: instance method 'animation(_:value:)' requires that 'Binding<Subject>' conform to 'Equatable'
+        .animation(.easeInOut(duration: 0.3), value: viewModel.detectedLightingCondition)
+         ^
+SwiftUICore.View.animation:2:36: note: where 'V' = 'Binding<Subject>'
+@inlinable nonisolated public func animation<V>(_ animation: Animation?, value: V) -> some View where V : Equatable
+                                   ^
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:53:64: error: value of type 'SerialScannerViewModel' has no dynamic member 'detectedLightingCondition' using key path from root type 'SerialScannerViewModel'
+        .animation(.easeInOut(duration: 0.3), value: viewModel.detectedLightingCondition)
+                                                     ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:53:54: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+        .animation(.easeInOut(duration: 0.3), value: viewModel.detectedLightingCondition)
+                                                     ^
+                                                     $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:54:64: error: value of type 'SerialScannerViewModel' has no dynamic member 'lightingDetectionConfidence' using key path from root type 'SerialScannerViewModel'
+        .animation(.easeInOut(duration: 0.3), value: viewModel.lightingDetectionConfidence)
+                                                     ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:54:54: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+        .animation(.easeInOut(duration: 0.3), value: viewModel.lightingDetectionConfidence)
+                                                     ^
+                                                     $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:58:26: error: value of type 'SerialScannerViewModel' has no dynamic member 'detectedLightingCondition' using key path from root type 'SerialScannerViewModel'
+        switch viewModel.detectedLightingCondition {
+               ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:58:16: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+        switch viewModel.detectedLightingCondition {
+               ^
+               $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:77:36: error: value of type 'SerialScannerViewModel' has no dynamic member 'lightingDetectionConfidence' using key path from root type 'SerialScannerViewModel'
+        let brightness = viewModel.lightingDetectionConfidence
+                         ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:77:26: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+        let brightness = viewModel.lightingDetectionConfidence
+                         ^
+                         $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:88:48: error: binary operator '==' cannot be applied to operands of type 'Binding<_>' and 'FormatStyleCapitalizationContext'
+        if viewModel.detectedLightingCondition == .unknown {
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^  ~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:88:48: note: overloads for '==' exist with these partially matching parameter lists: (FormatStyleCapitalizationContext, FormatStyleCapitalizationContext), (Locale.Currency, Locale.Currency), (Locale.Region, Locale.Region), (Locale.Script, Locale.Script)
+        if viewModel.detectedLightingCondition == .unknown {
+                                               ^
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:88:22: error: value of type 'SerialScannerViewModel' has no dynamic member 'detectedLightingCondition' using key path from root type 'SerialScannerViewModel'
+        if viewModel.detectedLightingCondition == .unknown {
+           ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:88:12: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+        if viewModel.detectedLightingCondition == .unknown {
+           ^
+           $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:102:67: error: cannot convert value of type 'Binding<Subject>' to expected argument type 'String'
+            Image(systemName: viewModel.detectedLightingCondition.iconName)
+                                                                  ^
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:102:41: error: value of type 'SerialScannerViewModel' has no dynamic member 'detectedLightingCondition' using key path from root type 'SerialScannerViewModel'
+            Image(systemName: viewModel.detectedLightingCondition.iconName)
+                              ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:102:31: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+            Image(systemName: viewModel.detectedLightingCondition.iconName)
+                              ^
+                              $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:118:28: error: value of type 'SerialScannerViewModel' has no dynamic member 'isLightingDetectionEnabled' using key path from root type 'SerialScannerViewModel'
+        .opacity(viewModel.isLightingDetectionEnabled ? 1.0 : 0.5)
+                 ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:118:18: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+        .opacity(viewModel.isLightingDetectionEnabled ? 1.0 : 0.5)
+                 ^
+                 $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:118:28: error: cannot convert value of type 'Binding<Subject>' to expected condition type 'Bool'
+        .opacity(viewModel.isLightingDetectionEnabled ? 1.0 : 0.5)
+                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:119:10: error: instance method 'animation(_:value:)' requires that 'Binding<Subject>' conform to 'Equatable'
+        .animation(.easeInOut(duration: 0.3), value: viewModel.detectedLightingCondition)
+         ^
+SwiftUICore.View.animation:2:36: note: where 'V' = 'Binding<Subject>'
+@inlinable nonisolated public func animation<V>(_ animation: Animation?, value: V) -> some View where V : Equatable
+                                   ^
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:119:64: error: value of type 'SerialScannerViewModel' has no dynamic member 'detectedLightingCondition' using key path from root type 'SerialScannerViewModel'
+        .animation(.easeInOut(duration: 0.3), value: viewModel.detectedLightingCondition)
+                                                     ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:119:54: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+        .animation(.easeInOut(duration: 0.3), value: viewModel.detectedLightingCondition)
+                                                     ^
+                                                     $
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:123:26: error: value of type 'SerialScannerViewModel' has no dynamic member 'detectedLightingCondition' using key path from root type 'SerialScannerViewModel'
+        switch viewModel.detectedLightingCondition {
+               ~~~~~~~~~ ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift:123:16: error: referencing subscript 'subscript(dynamicMember:)' requires wrapper 'ObservedObject<SerialScannerViewModel>.Wrapper'
+        switch viewModel.detectedLightingCondition {
+               ^
+               $
+
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CleanScannerOverlayView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AccessibilityManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ClientConfig.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/Phase2ROIOverlayView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsExportFormat.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/SecureStore.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ImagePreprocessor.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/SettingsView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/Pagination.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/Shared/NetworkStatusView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialScannerPipeline.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/WeeklyAnalyticsTrend.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CleanIPadScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/VisionTextRecognizer.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/Untitled.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/CameraControlService.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/PerformanceMetricsView.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsDashboardData.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/PowerManagementService.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/HealthMonitoringService.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/NumbersTemplate.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialOCREnhancer.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SystemStats.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CameraPreviewView.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/UIFeedbackManager.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/SerialRegionDetector.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BatchProcessor.swift -primary-file /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/LightingIndicatorView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsConfiguration.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/PlatformDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BaselineMetricsCollector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/GoogleSheetsService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/HistoryResponse.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ScreenDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SystemHealthMetrics.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/BatchProcessingView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/TelemetryService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/SerialFormatClassifier.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/IPadOptimizedSerialScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ML/CoreMLModelDefinitions.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/PlatformCompatibility.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BackendService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/FrameQualityAnalyzer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/HealthStatus.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/SerialScannerViewModel+PowerManagement.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ScanningGuidanceService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ContentView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/Sorting.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/BaselineMetricsDashboard.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SurfacePolarityClassifier.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/PreprocessingService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/HistoryView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/IPadSerialScannerOptimizer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AppleSerialValidator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ExportManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/SerialScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/Filters.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/SerialScannerViewModel+Extensions.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/RecoveryCoordinator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SerialSubmission.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AngleIndicatorView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SurfaceDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/MLUtils.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ExportView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/CameraManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AppleNumbersService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ErrorHandlingService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ScannerSettingsView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ConsensusAnalyticsModels.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/SerialScannerViewModel.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/PipelineTypes.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/AppleSerialScannerApp.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SerialResponse.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AnalyticsDashboardView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/StabilityTracker.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/MLModelLoader.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/EnhancedScannerOverlay.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/CameraConfigurator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AngleDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/EnhancedSerialValidator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ScannerControlsView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/BatchModels.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/DelegateExtensions.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/Phase3SerialOCRTuner.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ScannerTypes.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AccessoryPresetSelectorView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SmartROIDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/CharacterDisambiguator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/EnhancedCameraView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/BackgroundProcessingManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AnalyticsService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/DiagnosticsService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ROIRectangleView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsModels.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/MultiFrameConsensusEngine.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/VisionKitLiveScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ScanHistory.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AccessoryPresetManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialValidator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/DeviceTypeAwareScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/AppLogger.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AmbiguityResolver.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/DiagnosticsLogger.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ROIOverlayView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsFilters.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/SerialTextRecognitionOptimizer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/LightingAnalyzer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/SurfaceIndicatorView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/PerformanceInsight.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/Shared/SharedCameraView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialScannerRecoveryManager.swift -supplementary-output-file-map /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/supplementaryOutputs-2 -emit-localized-strings -emit-localized-strings-path /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64 -target arm64-apple-ios18-simulator -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -I /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator -F /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator -no-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=5 -module-cache-path /Users/apple/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -profile-generate -profile-coverage-mapping -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AppleSerialScanner_const_extract_protocols.json -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/apple/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/apple/Documents/AppleSerialScanner -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/apple/Documents/AppleSerialScanner -Xcc -ivfsstatcache -Xcc /Users/apple/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-generated-files.hmap -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-own-target-headers.hmap -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-all-target-headers.hmap -Xcc -iquote -Xcc /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/AppleSerialScanner-project-headers.hmap -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/DerivedSources-normal/arm64 -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/DerivedSources/arm64 -Xcc -I/Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/DerivedSources -Xcc -DDEBUG\=1 -module-name AppleSerialScanner -frontend-parseable-output -disable-clang-spi -target-sdk-version 18.5 -target-sdk-name iphonesimulator18.5 -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/Untitled.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/CameraControlService.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/PerformanceMetricsView.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AnalyticsDashboardData.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/PowerManagementService.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/HealthMonitoringService.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/NumbersTemplate.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/SerialOCREnhancer.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/SystemStats.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/CameraPreviewView.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/UIFeedbackManager.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/SerialRegionDetector.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/BatchProcessor.o -o /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Build/Intermediates.noindex/AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/LightingIndicatorView.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/Untitled.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/CameraControlService.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/PerformanceMetricsView.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/AnalyticsDashboardData.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/PowerManagementService.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/HealthMonitoringService.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/NumbersTemplate.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/SerialOCREnhancer.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/SystemStats.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/CameraPreviewView.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/UIFeedbackManager.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/SerialRegionDetector.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/BatchProcessor.o -index-unit-output-path /AppleSerialScanner.build/Debug-iphonesimulator/AppleSerialScanner.build/Objects-normal/arm64/LightingIndicatorView.o -index-store-path /Users/apple/Library/Developer/Xcode/DerivedData/AppleSerialScanner-erivtrcpyuanopapbynpbfhlizso/Index.noindex/DataStore -index-system-modules
+SwiftCompile normal arm64 Compiling\ SerialValidator.swift,\ DeviceTypeAwareScannerView.swift,\ AppLogger.swift,\ AmbiguityResolver.swift,\ DiagnosticsLogger.swift,\ ROIOverlayView.swift,\ AnalyticsFilters.swift,\ SerialTextRecognitionOptimizer.swift,\ LightingAnalyzer.swift,\ SurfaceIndicatorView.swift,\ PerformanceInsight.swift,\ SharedCameraView.swift,\ SerialScannerRecoveryManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialValidator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/DeviceTypeAwareScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/AppLogger.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AmbiguityResolver.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/DiagnosticsLogger.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ROIOverlayView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsFilters.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/SerialTextRecognitionOptimizer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/LightingAnalyzer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/SurfaceIndicatorView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/PerformanceInsight.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/Shared/SharedCameraView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialScannerRecoveryManager.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialValidator.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/DeviceTypeAwareScannerView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/AppLogger.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AmbiguityResolver.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/DiagnosticsLogger.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ROIOverlayView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsFilters.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/SerialTextRecognitionOptimizer.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/LightingAnalyzer.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/SurfaceIndicatorView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/PerformanceInsight.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/Shared/SharedCameraView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialScannerRecoveryManager.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 Compiling\ Filters.swift,\ SerialScannerViewModel+Extensions.swift,\ RecoveryCoordinator.swift,\ SerialSubmission.swift,\ AngleIndicatorView.swift,\ SurfaceDetector.swift,\ MLUtils.swift,\ ExportView.swift,\ CameraManager.swift,\ AppleNumbersService.swift,\ ErrorHandlingService.swift,\ ScannerSettingsView.swift,\ ConsensusAnalyticsModels.swift,\ SerialScannerViewModel.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/Filters.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/SerialScannerViewModel+Extensions.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/RecoveryCoordinator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SerialSubmission.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AngleIndicatorView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SurfaceDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/MLUtils.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ExportView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/CameraManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AppleNumbersService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ErrorHandlingService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ScannerSettingsView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ConsensusAnalyticsModels.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/SerialScannerViewModel.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/Filters.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/SerialScannerViewModel+Extensions.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/RecoveryCoordinator.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SerialSubmission.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AngleIndicatorView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SurfaceDetector.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/MLUtils.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ExportView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/CameraManager.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AppleNumbersService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ErrorHandlingService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ScannerSettingsView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ConsensusAnalyticsModels.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/SerialScannerViewModel.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 Compiling\ CleanScannerOverlayView.swift,\ AccessibilityManager.swift,\ ClientConfig.swift,\ Phase2ROIOverlayView.swift,\ AnalyticsExportFormat.swift,\ SecureStore.swift,\ ImagePreprocessor.swift,\ SettingsView.swift,\ Pagination.swift,\ NetworkStatusView.swift,\ SerialScannerPipeline.swift,\ WeeklyAnalyticsTrend.swift,\ CleanIPadScannerView.swift,\ VisionTextRecognizer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CleanScannerOverlayView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AccessibilityManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ClientConfig.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/Phase2ROIOverlayView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsExportFormat.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/SecureStore.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ImagePreprocessor.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/SettingsView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/Pagination.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/Shared/NetworkStatusView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialScannerPipeline.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/WeeklyAnalyticsTrend.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CleanIPadScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/VisionTextRecognizer.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CleanScannerOverlayView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AccessibilityManager.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ClientConfig.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/Phase2ROIOverlayView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsExportFormat.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/SecureStore.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ImagePreprocessor.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/SettingsView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/Pagination.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/Shared/NetworkStatusView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SerialScannerPipeline.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/WeeklyAnalyticsTrend.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/CleanIPadScannerView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/VisionTextRecognizer.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ AppleSerialScanner (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+EmitSwiftModule normal arm64 (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 Compiling\ AnalyticsConfiguration.swift,\ PlatformDetector.swift,\ BaselineMetricsCollector.swift,\ GoogleSheetsService.swift,\ HistoryResponse.swift,\ ScreenDetector.swift,\ SystemHealthMetrics.swift,\ BatchProcessingView.swift,\ TelemetryService.swift,\ SerialFormatClassifier.swift,\ IPadOptimizedSerialScannerView.swift,\ CoreMLModelDefinitions.swift,\ PlatformCompatibility.swift,\ BackendService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsConfiguration.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/PlatformDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BaselineMetricsCollector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/GoogleSheetsService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/HistoryResponse.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ScreenDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SystemHealthMetrics.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/BatchProcessingView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/TelemetryService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/SerialFormatClassifier.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/IPadOptimizedSerialScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ML/CoreMLModelDefinitions.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/PlatformCompatibility.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BackendService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsConfiguration.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/PlatformDetector.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BaselineMetricsCollector.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/GoogleSheetsService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/HistoryResponse.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ScreenDetector.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SystemHealthMetrics.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/BatchProcessingView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/TelemetryService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/SerialFormatClassifier.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/IPadOptimizedSerialScannerView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ML/CoreMLModelDefinitions.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/PlatformCompatibility.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/BackendService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 Compiling\ ScannerTypes.swift,\ AccessoryPresetSelectorView.swift,\ SmartROIDetector.swift,\ CharacterDisambiguator.swift,\ EnhancedCameraView.swift,\ BackgroundProcessingManager.swift,\ AnalyticsService.swift,\ DiagnosticsService.swift,\ ROIRectangleView.swift,\ AnalyticsModels.swift,\ MultiFrameConsensusEngine.swift,\ VisionKitLiveScannerView.swift,\ ScanHistory.swift,\ AccessoryPresetManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ScannerTypes.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AccessoryPresetSelectorView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SmartROIDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/CharacterDisambiguator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/EnhancedCameraView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/BackgroundProcessingManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AnalyticsService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/DiagnosticsService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ROIRectangleView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsModels.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/MultiFrameConsensusEngine.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/VisionKitLiveScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ScanHistory.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AccessoryPresetManager.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ScannerTypes.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AccessoryPresetSelectorView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SmartROIDetector.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/CharacterDisambiguator.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/EnhancedCameraView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/BackgroundProcessingManager.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AnalyticsService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/DiagnosticsService.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ROIRectangleView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/AnalyticsModels.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/MultiFrameConsensusEngine.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/VisionKitLiveScannerView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/ScanHistory.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AccessoryPresetManager.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 Compiling\ PipelineTypes.swift,\ AppleSerialScannerApp.swift,\ SerialResponse.swift,\ AnalyticsDashboardView.swift,\ StabilityTracker.swift,\ MLModelLoader.swift,\ EnhancedScannerOverlay.swift,\ CameraConfigurator.swift,\ AngleDetector.swift,\ EnhancedSerialValidator.swift,\ ScannerControlsView.swift,\ BatchModels.swift,\ DelegateExtensions.swift,\ Phase3SerialOCRTuner.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/PipelineTypes.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/AppleSerialScannerApp.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SerialResponse.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AnalyticsDashboardView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/StabilityTracker.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/MLModelLoader.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/EnhancedScannerOverlay.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/CameraConfigurator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AngleDetector.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/EnhancedSerialValidator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ScannerControlsView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/BatchModels.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/DelegateExtensions.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/Phase3SerialOCRTuner.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/PipelineTypes.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/AppleSerialScannerApp.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/SerialResponse.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/AnalyticsDashboardView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/StabilityTracker.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/MLModelLoader.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/EnhancedScannerOverlay.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/CameraConfigurator.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AngleDetector.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/EnhancedSerialValidator.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/ScannerControlsView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/BatchModels.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/DelegateExtensions.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/Phase3SerialOCRTuner.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+    cd /Users/apple/Documents/AppleSerialScanner
+    
+
+SwiftCompile normal arm64 Compiling\ FrameQualityAnalyzer.swift,\ HealthStatus.swift,\ SerialScannerViewModel+PowerManagement.swift,\ ScanningGuidanceService.swift,\ ContentView.swift,\ Sorting.swift,\ BaselineMetricsDashboard.swift,\ SurfacePolarityClassifier.swift,\ PreprocessingService.swift,\ HistoryView.swift,\ IPadSerialScannerOptimizer.swift,\ AppleSerialValidator.swift,\ ExportManager.swift,\ SerialScannerView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/FrameQualityAnalyzer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/HealthStatus.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ViewModels/SerialScannerViewModel+PowerManagement.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ScanningGuidanceService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/ContentView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Models/Sorting.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/BaselineMetricsDashboard.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/SurfacePolarityClassifier.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ML/PreprocessingService.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/HistoryView.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Utils/IPadSerialScannerOptimizer.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/AppleSerialValidator.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Services/ExportManager.swift /Users/apple/Documents/AppleSerialScanner/AppleSerialScanner/Views/SerialScannerView.swift (in target 'AppleSerialScanner' from project 'AppleSerialScanner')
+Command SwiftCompile failed with a nonzero exit code
+
+note: Disabling hardened runtime with ad-hoc codesigning. (in target 'AppleSerialScanner' from project 'AppleSerialScanner')

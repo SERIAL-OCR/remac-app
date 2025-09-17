@@ -1,6 +1,6 @@
 import Foundation
 import Combine
-import os.log
+import os
 
 /// Coordinates recovery actions across different subsystems
 class RecoveryCoordinator {
@@ -188,15 +188,20 @@ class RecoveryCoordinator {
     }
     
     private func checkSystemResources() {
-        let metrics = SystemHealthMetrics.current
+        // Capture current system metrics using the monitor helper
+        let monitor = SystemHealthMonitor.captureCurrentMetrics()
         
-        if metrics.memoryUsage > 0.9 || metrics.cpuUsage > 0.8 {
+        if monitor.memoryUsage > 0.9 || monitor.cpuUsage > 0.8 {
             // Trigger system resource recovery
             let error = ScanningError.systemResource(
                 code: "RESOURCE_CRITICAL",
                 description: "System resources critically low"
             )
+            
+            // Consume the returned publisher to avoid unused-result warnings
             initiateRecovery(for: .camera, error: error)
+                .sink { _ in }
+                .store(in: &cancellables)
         }
     }
 }
@@ -224,7 +229,7 @@ enum RecoveryResult {
 }
 
 /// Status of a recovery action
-enum RecoveryStatus {
+enum RecoveryState {
     case preparing
     case inProgress
     case completed
@@ -236,14 +241,14 @@ class RecoveryAction {
     let id: String
     let subsystem: SubsystemType
     let error: ScanningError
-    var status: RecoveryStatus
+    var status: RecoveryState
     let subject: PassthroughSubject<RecoveryResult, Never>
     
     init(
         id: String,
         subsystem: SubsystemType,
         error: ScanningError,
-        status: RecoveryStatus,
+        status: RecoveryState,
         subject: PassthroughSubject<RecoveryResult, Never>
     ) {
         self.id = id

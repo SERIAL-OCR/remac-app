@@ -18,7 +18,7 @@ struct EnhancedScannerOverlay: View {
                 )
                 
                 // ROI corners with dynamic color
-                ROICornerGuides(
+                EnhancedROICornerGuides(
                     bounds: roiBounds,
                     cornerLength: cornerLength,
                     lineWidth: lineWidth,
@@ -112,7 +112,7 @@ struct MaskedBackgroundView: View {
 }
 
 /// Dynamic corner guides for ROI
-struct ROICornerGuides: View {
+struct EnhancedROICornerGuides: View {
     let bounds: CGRect
     let cornerLength: CGFloat
     let lineWidth: CGFloat

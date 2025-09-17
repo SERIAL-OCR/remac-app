@@ -1,4 +1,4 @@
-import Foundation
+    import Foundation
 
 /// Validates Apple serial numbers with strict alphabet and length constraints
 class SerialValidator {
@@ -82,7 +82,7 @@ class SerialValidator {
     }
     
     /// Batch validates multiple candidates and returns the best valid one
-    func validateCandidates(_ candidates: [TextCandidate]) -> BestCandidateResult {
+    func validateCandidates(_ candidates: [TextCandidate]) -> ValidationResult {
         var validCandidates: [ValidatedCandidate] = []
         var rejectedCandidates: [RejectedCandidate] = []
         
@@ -106,7 +106,7 @@ class SerialValidator {
         // Sort by composite score (OCR confidence + serial pattern confidence)
         validCandidates.sort { $0.compositeScore > $1.compositeScore }
         
-        return BestCandidateResult(
+        return ValidationResult(
             bestCandidate: validCandidates.first,
             allValidCandidates: validCandidates,
             rejectedCandidates: rejectedCandidates
@@ -159,12 +159,11 @@ class SerialValidator {
         
         return max(0.0, min(1.0, compositeScore))
     }
+
+    /// Reset validator internal caches/state (used by recovery coordinator)
+    func reset() {
+        // No-op for now; placeholder for future stateful validator caches.
+    }
 }
 
-// MARK: - Supporting Types
-
-struct BestCandidateResult {
-    let bestCandidate: ValidatedCandidate?
-    let allValidCandidates: [ValidatedCandidate]
-    let rejectedCandidates: [RejectedCandidate]
-}
+// NOTE: ValidationResult is defined in PipelineTypes.swift; by returning that type we align with pipeline expectations.

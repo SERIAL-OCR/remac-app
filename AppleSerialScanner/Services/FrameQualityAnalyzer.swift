@@ -1,10 +1,14 @@
 import CoreImage
 import Vision
 import os.log
+import Combine
 
 /// Analyzes frame quality for optimal serial number recognition
-class FrameQualityAnalyzer {
+class FrameQualityAnalyzer: ObservableObject {
     private let logger = Logger(subsystem: "com.appleserialscanner", category: "FrameQuality")
+    
+    // Published latest quality metrics for observers
+    @Published var lastQualityMetrics: FrameQualityMetrics? = nil
     
     // Analysis configuration
     private let minimumTextContrast: Float = 0.4
@@ -38,6 +42,11 @@ class FrameQualityAnalyzer {
         metrics = analyzeTextRegions(image: ciImage, currentMetrics: metrics)
         
         logger.debug("Frame analysis complete - Clarity: \(metrics.clarityScore), Brightness: \(metrics.brightnessScore), Stability: \(metrics.stabilityScore)")
+        
+        // Publish latest metrics for UI consumers
+        DispatchQueue.main.async { [weak self] in
+            self?.lastQualityMetrics = metrics
+        }
         
         return metrics
     }

@@ -2,9 +2,9 @@ import Foundation
 import CoreML
 import Vision
 import CoreImage
-#if canImport(UIKit)
+#if os(iOS)
 import UIKit
-#elseif canImport(AppKit)
+#elseif os(macOS)
 import AppKit
 #endif
 

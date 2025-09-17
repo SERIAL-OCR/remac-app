@@ -2,7 +2,11 @@ import Foundation
 import CoreML
 import Vision
 import CoreImage
+#if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 /// Character Disambiguator using Core ML to resolve ambiguous characters (0/O, 1/I/L, 5/S)
 @MainActor

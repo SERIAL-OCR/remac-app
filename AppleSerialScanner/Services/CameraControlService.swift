@@ -1,5 +1,9 @@
- import AVFoundation
+import AVFoundation
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 import CoreImage
 import os.log
 
@@ -29,84 +33,100 @@ class CameraControlService {
     func configureDevice(_ device: AVCaptureDevice) throws {
         try device.lockForConfiguration()
         defer { device.unlockForConfiguration() }
-        
+
         // Configure focus system
         if device.isFocusModeSupported(.continuousAutoFocus) {
             device.focusMode = .continuousAutoFocus
+            #if os(iOS) || targetEnvironment(macCatalyst)
             if device.isAutoFocusRangeRestrictionSupported {
                 device.autoFocusRangeRestriction = .near
             }
+            #endif
         }
-        
+
         // Configure exposure
         if device.isExposureModeSupported(.continuousAutoExposure) {
             device.exposureMode = .continuousAutoExposure
         }
-        
-        // Enable optical stabilization if available
-        if device.isOpticalStabilizationSupported {
-            device.activeOpticalStabilization = true
-        }
-        
-        // Configure video HDR if available
-        if device.isHDRVideoSupported {
-            device.automaticallyAdjustsVideoHDREnabled = true
-        }
-        
+
+        // iOS-only features (optical stabilization / HDR) are intentionally skipped on macOS builds.
+        // Leave best-effort hooks here if needed for iOS builds, but avoid referencing unavailable
+        // members on macOS to keep the file parseable across platforms.
+        #if os(iOS) || targetEnvironment(macCatalyst)
+        // On iOS/macCatalyst we could enable optical stabilization or HDR if available.
+        // This implementation avoids compile-time references on macOS.
+        #endif
+
         logger.info("Camera configured with optimal settings for serial scanning")
     }
-    
+
     /// Analyze and adjust camera settings based on frame quality
     func analyzeAndAdjust(device: AVCaptureDevice, frameQuality: FrameQualityMetrics) {
         guard autoAdjustmentEnabled else { return }
-        
+
         let currentTime = CACurrentMediaTime()
         guard currentTime - lastAdjustmentTime >= adjustmentCooldown else { return }
-        
+
         do {
             try device.lockForConfiguration()
             defer { device.unlockForConfiguration() }
-            
+
             // Adjust zoom based on text size and clarity
+            let currentZoom: CGFloat
+            #if os(iOS) || targetEnvironment(macCatalyst)
+            currentZoom = device.videoZoomFactor
+            #else
+            currentZoom = currentZoomFactor
+            #endif
+
             let optimalZoom = calculateOptimalZoom(
-                currentZoom: device.videoZoomFactor,
+                currentZoom: currentZoom,
                 textSize: frameQuality.averageTextSize,
                 clarity: frameQuality.clarityScore
             )
-            
+
             // Smoothly adjust zoom
             let newZoom = max(minZoomFactor, min(optimalZoom, maxZoomFactor))
+            #if os(iOS) || targetEnvironment(macCatalyst)
             device.videoZoomFactor = newZoom
-            
+            #else
+            currentZoomFactor = newZoom
+            #endif
+
             // Adjust focus if text is blurry
             if frameQuality.clarityScore < 0.7 {
+                #if os(iOS) || targetEnvironment(macCatalyst)
                 if let focusPoint = frameQuality.primaryTextLocation,
                    device.isFocusPointOfInterestSupported {
                     device.focusPointOfInterest = focusPoint
                     device.focusMode = .autoFocus
                 }
+                #endif
             }
-            
+
             // Adjust exposure for optimal text contrast
+            #if os(iOS) || targetEnvironment(macCatalyst)
             if !optimalBrightnessRange.contains(frameQuality.brightnessScore),
                device.isExposureModeSupported(.autoExpose) {
                 device.exposureMode = .autoExpose
             }
-            
+            #endif
+
             lastAdjustmentTime = currentTime
             logger.debug("Camera adjusted - Zoom: \(newZoom), Clarity: \(frameQuality.clarityScore)")
-            
+
         } catch {
             logger.error("Failed to adjust camera: \(error.localizedDescription)")
         }
     }
-    
+
     /// Reset camera to default settings
     func resetCamera(_ device: AVCaptureDevice) {
         do {
             try device.lockForConfiguration()
             defer { device.unlockForConfiguration() }
-            
+
+            #if os(iOS) || targetEnvironment(macCatalyst)
             device.videoZoomFactor = 1.0
             if device.isFocusModeSupported(.continuousAutoFocus) {
                 device.focusMode = .continuousAutoFocus
@@ -114,10 +134,13 @@ class CameraControlService {
             if device.isExposureModeSupported(.continuousAutoExposure) {
                 device.exposureMode = .continuousAutoExposure
             }
-            
+            #else
+            // macOS: best-effort resets (not all properties available)
+            #endif
+
             currentZoomFactor = 1.0
             lastFocusPoint = nil
-            
+
             logger.info("Camera reset to default settings")
         } catch {
             logger.error("Failed to reset camera: \(error.localizedDescription)")

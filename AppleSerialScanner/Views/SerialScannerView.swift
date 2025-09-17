@@ -8,15 +8,18 @@ struct SerialScannerView: View {
     @ObservedObject var scannerViewModel: SerialScannerViewModel
     @State private var showingSettings = false
     @State private var showingHistory = false
-    
+    // Local slider state to decouple UI thumb movement from authoritative camera zoom
+    @State private var sliderValue: Double = 1.0
+    @State private var isSliderEditing: Bool = false
+
     var body: some View {
         NavigationView {
             ZStack {
                 if let previewLayer = scannerViewModel.previewLayer {
-                    // Camera preview with overlay
+                    // Camera preview with overlay. Keep app chrome white; camera will be visible only through the ROI mask.
                     CameraPreviewView(previewLayer: previewLayer)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black)
+                        .background(Color.white)
                         .ignoresSafeArea()
                 } else {
                     // Fallback UI if camera is not available
@@ -35,9 +38,46 @@ struct SerialScannerView: View {
                             .foregroundColor(.secondary)
                         Spacer()
                     }
-                    .background(Color.black.ignoresSafeArea())
+                    .background(Color.white.ignoresSafeArea())
                 }
-                // ROI overlay and guidance
+                // Real-time editable detected text field (search bar) anchored at top
+                VStack(spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        TextField("Detected text", text: $scannerViewModel.recognizedText, onCommit: {
+                            // Fallback for older SwiftUI versions
+                            scannerViewModel.submitRecognizedText()
+                        })
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .padding(8)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color(.systemGray6)))
+                            .textInputAutocapitalization(.characters)
+                            .disableAutocorrection(true)
+                            .submitLabel(.search)
+                            .onSubmit {
+                                scannerViewModel.submitRecognizedText()
+                            }
+                            .accessibilityLabel("Detected serial input")
+
+                        Button(action: {
+                            scannerViewModel.submitRecognizedText()
+                        }) {
+                            Text("Submit")
+                                .font(.system(size: 14, weight: .semibold))
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 10)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.blue))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+
+                    Spacer()
+                }
+                
+                // ROI overlay and guidance (masking so only ROI shows camera)
                 ScannerOverlayView(scannerViewModel: scannerViewModel)
                 
                 // Status and feedback UI
@@ -46,6 +86,47 @@ struct SerialScannerView: View {
 
                     // Status bar
                     StatusBarView(scannerViewModel: scannerViewModel)
+
+                    // Manual zoom slider
+                    HStack(spacing: 12) {
+                        // Show the smoothed/displayed zoom value so UI matches the ramp animation
+                        Text(String(format: "%.2fx", scannerViewModel.displayedZoom))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.primary)
+                            .padding(.leading, 6)
+
+                        // Bind the slider thumb to a local sliderValue so dragging is responsive and we can commit
+                        // the final value to the camera when editing ends. While dragging we update the smoothing
+                        // target so the smoothed displayedZoom follows the user input.
+                        Slider(value: Binding(get: {
+                             // Show local slider value while dragging; initialize from displayedZoom on appear
+                             sliderValue
+                         }, set: { newVal in
+                             sliderValue = newVal
+                             // Update smoothing target immediately so the thumb and label feel responsive
+                             scannerViewModel.setDisplayedZoomTarget(CGFloat(newVal))
+                         }), in: Double(scannerViewModel.minSupportedZoom)...Double(scannerViewModel.maxSupportedZoom), step: 0.01, onEditingChanged: { editing in
++                            // Track editing state so external camera updates do not jump the thumb while dragging
++                            isSliderEditing = editing
+                            if !editing {
+                                // User finished interacting — request the camera to apply the zoom (animated ramp)
+                                scannerViewModel.setZoomFactor(CGFloat(sliderValue))
+                            }
+                        })
+                        .onAppear {
+                            sliderValue = Double(scannerViewModel.displayedZoom)
+                        }
++                        // When the displayedZoom updates (from camera ramp), update the slider if the user is not interacting
++                        .onChange(of: scannerViewModel.displayedZoom) { newVal in
++                            guard !isSliderEditing else { return }
++                            // Animate the thumb to follow the camera ramp smoothly
++                            withAnimation(.linear(duration: 0.12)) {
++                                sliderValue = Double(newVal)
++                            }
++                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 6)
 
                     // Accessory preset selector
                     AccessoryPresetSelectorView(
@@ -116,12 +197,26 @@ struct ScannerOverlayView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Semi-transparent overlay
-                Rectangle()
-                    .fill(Color.black.opacity(0.3))
-                    .ignoresSafeArea()
-                
-                // Auto square ROI (centered) based on accessory preset
+                // White mask that hides the camera except the ROI (using even-odd fill)
+                Path { path in
+                    path.addRect(CGRect(origin: .zero, size: geometry.size))
+
+                    // Auto square ROI (centered) based on accessory preset
+                    let roiSize = scannerViewModel.accessoryPresetManager.currentOCRSettings.roiSize
+                    let side = min(geometry.size.width, geometry.size.height) * roiSize.width
+                    let roi = CGRect(
+                        x: (geometry.size.width - side) / 2.0,
+                        y: (geometry.size.height - side) / 2.0,
+                        width: side,
+                        height: side
+                    )
+
+                    path.addRoundedRect(in: roi, cornerSize: CGSize(width: 12, height: 12))
+                }
+                .fill(Color.white, style: FillStyle(eoFill: true))
+                .ignoresSafeArea()
+
+                // Recompute roi for layout and region updates
                 let roiSize = scannerViewModel.accessoryPresetManager.currentOCRSettings.roiSize
                 let side = min(geometry.size.width, geometry.size.height) * roiSize.width
                 let roi = CGRect(
@@ -147,8 +242,9 @@ struct ScannerOverlayView: View {
                         roiRect = updated
                         scannerViewModel.updateRegionOfInterest(from: updated, in: CGRect(origin: .zero, size: geometry.size))
                     }
+                // ROI stroke contrasts with white UI
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white, lineWidth: 3)
+                    .stroke(Color.black, lineWidth: 3)
                     .frame(width: roi.width, height: roi.height)
                     .position(x: roi.midX, y: roi.midY)
                 
@@ -167,11 +263,11 @@ struct ScannerOverlayView: View {
                     Spacer()
                     
                     Text(scannerViewModel.guidanceText)
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                         .font(.headline)
                         .multilineTextAlignment(.center)
                         .padding()
-                        .background(Color.black.opacity(0.7))
+                        .background(Color.white.opacity(0.9))
                         .cornerRadius(8)
                         .padding(.bottom, 100)
                 }
@@ -215,7 +311,7 @@ struct CornerIndicator: View {
                 path.addLine(to: CGPoint(x: size, y: size - thickness))
             }
         }
-        .stroke(Color.white, lineWidth: 4)
+        .stroke(Color.black, lineWidth: 4)
         .frame(width: 30, height: 30)
     }
 }

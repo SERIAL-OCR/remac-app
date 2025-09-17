@@ -31,11 +31,63 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     @Published var isPowerSavingModeActive = false
     @Published var isScanning = false
     @Published var currentScanningMode: ScanningMode = .screen
-    
-    // Phase 0: Baseline metrics properties
-    @Published var currentBaselineMetrics: BaselineMetricsCollector.BaselineReport?
-    @Published var showBaselineMetrics = false
-    
+    @Published var zoomFactor: CGFloat = 1.0
+    // Device-supported zoom bounds exposed for UI
+    @Published var minSupportedZoom: CGFloat = 1.0
+    @Published var maxSupportedZoom: CGFloat = 5.0
+    // Smooth UI display value for zoom (interpolated to match camera ramp)
+    @Published var displayedZoom: CGFloat = 1.0
+
+    // Expose previewLayer so SwiftUI views can show the camera only inside the ROI
+    @Published var previewLayer: AVCaptureVideoPreviewLayer?
+
+    // --- New: Accessory preset manager exposed so views/services can read/update presets ---
+    @Published var accessoryPresetManager = AccessoryPresetManager()
+
+    // --- New: Lighting detection state (used by LightingIndicatorView) ---
+    enum LightingCondition: Equatable {
+        case optimal, bright, dim, uneven, glare, mixed, unknown
+
+        var iconName: String {
+            switch self {
+            case .optimal: return "sun.max"
+            case .bright: return "sun.max.fill"
+            case .dim: return "cloud.moon"
+            case .uneven: return "slash.circle"
+            case .glare: return "sun.dust"
+            case .mixed: return "circle.lefthalf.fill"
+            case .unknown: return "questionmark"
+            }
+        }
+
+        var description: String {
+            switch self {
+            case .optimal: return "Optimal"
+            case .bright: return "Bright"
+            case .dim: return "Dim"
+            case .uneven: return "Uneven"
+            case .glare: return "Glare"
+            case .mixed: return "Mixed"
+            case .unknown: return "Unknown"
+            }
+        }
+    }
+
+    @Published var detectedLightingCondition: LightingCondition = .unknown
+    @Published var lightingDetectionConfidence: Float = 0.0
+    @Published var isLightingDetectionEnabled: Bool = true
+
+    // Surface detection state (added to match UI usage in SurfaceIndicatorView)
+    @Published var detectedSurfaceType: SurfaceType = .unknown
+    @Published var surfaceDetectionConfidence: Float = 0.0
+    @Published var isSurfaceDetectionEnabled: Bool = true
+
+    // Angle detection toggle used by UI
+    @Published var isAngleDetectionEnabled: Bool = true
+
+    // Frame limits and counters exposed to UI
+    @Published var maxFrames: Int = 9999
+
     // MARK: - Performance Optimization
     private(set) var backgroundProcessingManager = BackgroundProcessingManager()
     let powerManagementService = PowerManagementService()
@@ -60,7 +112,8 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     
     // MARK: - Camera Integration
     private let cameraManager = CameraManager()
-    
+    private var vmCancellables = Set<AnyCancellable>()
+
     // MARK: - Logger
     private let logger = Logger(subsystem: "com.appleserialscanner", category: "SerialScannerViewModel")
     
@@ -68,12 +121,69 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         super.init()
         setupCameraDelegate()
         startMetricsRefreshTimer()
+        
+        // Keep view model zoomFactor in sync with camera manager
+        cameraManager.$zoomFactor
+            .receive(on: RunLoop.main)
+            .sink { [weak self] z in
+                guard let self = self else { return }
+                self.zoomFactor = z
+                // Update smoothing target and start interpolation toward the authoritative camera value
+                self.displayedZoomTarget = z
+                self.startSmoothingIfNeeded()
+            }
+            .store(in: &vmCancellables)
+
+        // Subscribe to device-supported zoom bounds
+        cameraManager.$minSupportedZoom
+            .receive(on: RunLoop.main)
+            .sink { [weak self] v in
+                self?.minSupportedZoom = v
+            }
+            .store(in: &vmCancellables)
+
+        cameraManager.$maxSupportedZoom
+            .receive(on: RunLoop.main)
+            .sink { [weak self] v in
+                self?.maxSupportedZoom = v
+            }
+            .store(in: &vmCancellables)
+
+        // Initialize and expose the preview layer for UI preview wrappers
+        if let layer = cameraManager.getPreviewLayer() {
+            self.previewLayer = layer
+        }
+
+        // Keep preview layer frame in sync with camera manager preview bounds
+        cameraManager.$previewBounds
+            .receive(on: RunLoop.main)
+            .sink { [weak self] bounds in
+                guard let layer = self?.previewLayer else { return }
+                // Update frame on main thread (layer is a CALayer subclass)
+                CATransaction.begin()
+                CATransaction.setDisableActions(true)
+                layer.frame = bounds
+                CATransaction.commit()
+            }
+            .store(in: &vmCancellables)
+
+        // Ensure accessory preset manager changes are observed and applied
+        accessoryPresetManager.$selectedAccessoryType
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.handleAccessoryPresetChange()
+                }
+            }
+            .store(in: &vmCancellables)
     }
     
     deinit {
         Task { @MainActor in
             stopMetricsRefreshTimer()
         }
+        // Clean up smoothing timer
+        stopSmoothingTimer()
     }
     
     private func setupCameraDelegate() {
@@ -125,6 +235,64 @@ class SerialScannerViewModel: NSObject, ObservableObject {
         cameraManager.stopSession()
     }
     
+    /// Request a zoom change from the UI (proxies to CameraManager)
+    func setZoomFactor(_ factor: CGFloat) {
+        // Request camera to change zoom (animated ramp on device when supported)
+        cameraManager.setZoomFactor(factor, animated: true)
+        // Optimistically update the view model's zoomFactor and smoothing target so the UI responds immediately.
+        DispatchQueue.main.async {
+            self.zoomFactor = factor
+            self.displayedZoomTarget = factor
+            self.startSmoothingIfNeeded()
+        }
+    }
+    
+    // Allow UI to set the smoothing target (used by Slider binding)
+    func setDisplayedZoomTarget(_ factor: CGFloat) {
+        DispatchQueue.main.async {
+            self.displayedZoomTarget = factor
+            self.startSmoothingIfNeeded()
+        }
+    }
+    
+    private func startSmoothingIfNeeded() {
+        // If a timer is already running, keep it. Otherwise start one to interpolate displayedZoom.
+        if smoothingTimer != nil { return }
+        // Ensure displayedZoom has a sensible initial value
+        if displayedZoom == 0 { displayedZoom = zoomFactor }
+        smoothingTimer = Timer.scheduledTimer(withTimeInterval: smoothingFrameDuration, repeats: true) { [weak self] t in
+            guard let self = self else { t.invalidate(); return }
+            // Interpolate exponentially toward the target
+            let delta = self.displayedZoomTarget - self.displayedZoom
+            // If very close, snap to target and stop timer
+            if abs(delta) < 0.001 {
+                // Animate final snap so UI thumb doesn't jump abruptly
+                DispatchQueue.main.async {
+                    withAnimation(.linear(duration: self.smoothingFrameDuration * 1.5)) {
+                        self.displayedZoom = self.displayedZoomTarget
+                    }
+                }
+                self.stopSmoothingTimer()
+                return
+            }
+            // Compute interpolated value
+            let newValue = self.displayedZoom + delta * self.smoothingRate
+            // Animate to the new interpolated value so Slider thumb and label animate smoothly
+            DispatchQueue.main.async {
+                withAnimation(.linear(duration: self.smoothingFrameDuration * 1.5)) {
+                    self.displayedZoom = newValue
+                }
+            }
+        }
+        // Add to run loop common modes so it continues during UI interactions
+        RunLoop.main.add(smoothingTimer!, forMode: .common)
+    }
+
+    private func stopSmoothingTimer() {
+        smoothingTimer?.invalidate()
+        smoothingTimer = nil
+    }
+    
     // MARK: - Helper Methods for Phase 0
     
     /// Creates a CVPixelBuffer from a CGImage for the enhanced pipeline
@@ -144,7 +312,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
             &pixelBuffer
         )
         
-        guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
+        guard status == kCFReturnSuccess, let buffer = pixelBuffer else {
             return nil
         }
         
@@ -216,6 +384,75 @@ class SerialScannerViewModel: NSObject, ObservableObject {
                 }
             }
         }
+    }
+
+    // Public API for the UI to submit the currently recognized/edited text
+    @MainActor
+    func submitRecognizedText() {
+        let text = recognizedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else {
+            guidanceText = "No text to submit"
+            return
+        }
+
+        // If format looks valid, submit; otherwise attempt submission and update guidance
+        if isValidAppleSerialFormat(text) {
+            guidanceText = "Submitting \(text)..."
+            submitSerial(text)
+        } else {
+            guidanceText = "Text may not match expected serial format — submitting anyway..."
+            submitSerial(text)
+        }
+    }
+
+    // MARK: - Auto Capture Controls (exposed to UI/selector)
+    @objc func startAutoCapture() {
+        guard !isAutoCapturing else { return }
+        isAutoCapturing = true
+        logger.debug("Auto capture started")
+
+        if !isScanning {
+            startScanning()
+        }
+    }
+
+    @objc func stopAutoCapture() {
+        guard isAutoCapturing else { return }
+        isAutoCapturing = false
+        logger.debug("Auto capture stopped")
+    }
+
+    // MARK: - Validation confirmation handler used by several views
+    @MainActor
+    func handleValidationConfirmation(confirmed: Bool) {
+        if confirmed {
+            if let best = validationResult?.bestCandidate {
+                submitSerial(best.candidate.text)
+            } else if !recognizedText.isEmpty {
+                submitSerial(recognizedText)
+            } else {
+                guidanceText = "Nothing to submit"
+            }
+        } else {
+            // User cancelled; update guidance
+            guidanceText = "Submission cancelled"
+        }
+    }
+
+    // Apply accessory preset changes to scanner pipeline / guidance
+    @MainActor
+    func handleAccessoryPresetChange() {
+        // Update guidance based on selected preset
+        guidanceText = accessoryPresetManager.getGuidanceText()
+
+        // Apply OCR settings to the pipeline if available (best-effort, scanner pipeline should expose configuration API)
+        let settings = accessoryPresetManager.currentOCRSettings
+        // Example: inform scannerPipeline or validator about allowlist/confidence threshold where APIs exist
+        // scannerPipeline.applyOCRSettings(settings) // (commented; implement when pipeline supports it)
+
+        // Adjust camera or timing heuristics if necessary
+        // For now, update UI-exposed timeouts/frames via guidance text / logs
+        AppLogger.ui.debug("Accessory preset changed to \(accessoryPresetManager.selectedAccessoryType.rawValue)")
     }
 }
 
@@ -338,4 +575,34 @@ struct FrameResult {
     let text: String
     let confidence: Float
     let timestamp: Date
+}
+
+extension SerialScannerViewModel {
+    /// Process a CGImage through the scanner pipeline (non-async wrapper)
+    func processFrame(_ cgImage: CGImage) {
+        guard let buffer = createPixelBuffer(from: cgImage) else { return }
+
+        scannerPipeline.processFrame(pixelBuffer: buffer, cameraMetadata: nil, mode: currentScanningMode) { [weak self] result in
+            Task { @MainActor in
+                self?.handlePipelineResult(result)
+            }
+        }
+    }
+
+    /// Async-optimized processing entry used by delegates that run on a Task context.
+    @MainActor
+    func processFrameOptimized(_ cgImage: CGImage) async {
+        guard let buffer = createPixelBuffer(from: cgImage) else { return }
+
+        // Throttle using BackgroundProcessingManager
+        guard backgroundProcessingManager.shouldProcessFrame() else { return }
+        backgroundProcessingManager.beginFrameProcessing()
+
+        scannerPipeline.processFrame(pixelBuffer: buffer, cameraMetadata: nil, mode: currentScanningMode) { [weak self] result in
+            Task { @MainActor in
+                self?.handlePipelineResult(result)
+                self?.backgroundProcessingManager.endFrameProcessing()
+            }
+        }
+    }
 }

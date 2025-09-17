@@ -121,10 +121,17 @@ struct EnhancedCameraView: View {
     }
     
     private func calculateROIBounds() -> CGRect {
+        #if canImport(UIKit)
         let screenBounds = UIScreen.main.bounds
+        #elseif canImport(AppKit)
+        let screenBounds = NSScreen.main?.frame ?? .zero
+        #else
+        let screenBounds = .zero
+        #endif
+
         let width = screenBounds.width * 0.8
         let height = width * 0.3 // Aspect ratio suitable for serial numbers
-        
+
         return CGRect(
             x: (screenBounds.width - width) / 2,
             y: (screenBounds.height - height) / 2,
@@ -183,25 +190,6 @@ struct CameraSettingsView: View {
             return .yellow
         } else {
             return .red
-        }
-    }
-}
-
-/// SwiftUI wrapper for AVCaptureVideoPreviewLayer
-struct CameraPreviewView: UIViewRepresentable {
-    let session: AVCaptureSession
-    
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
-        previewLayer.videoGravity = .resizeAspectFill
-        view.layer.addSublayer(previewLayer)
-        return view
-    }
-    
-    func updateUIView(_ uiView: UIView, context: Context) {
-        if let layer = uiView.layer.sublayers?.first as? AVCaptureVideoPreviewLayer {
-            layer.frame = uiView.bounds
         }
     }
 }

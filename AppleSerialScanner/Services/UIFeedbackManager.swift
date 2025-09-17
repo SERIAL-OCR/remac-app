@@ -30,25 +30,28 @@ class UIFeedbackManager: ObservableObject {
     // Success feedback
     @Published var showSuccessAnimation = false
     @Published var lastSuccessTimestamp: Date?
+
+    // Focus animation point (used by ScannerControlsView)
+    @Published var focusAnimationPoint: CGPoint? = nil
     
     // Configuration
     private let feedbackDebounceInterval: TimeInterval = 0.5
     private var feedbackTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
-    
+
     // MARK: - Dependencies
-    
+
     private let qualityAnalyzer: FrameQualityAnalyzer
     private let guidanceService: ScanningGuidanceService
-    
+
     init(qualityAnalyzer: FrameQualityAnalyzer, guidanceService: ScanningGuidanceService) {
         self.qualityAnalyzer = qualityAnalyzer
         self.guidanceService = guidanceService
         setupSubscriptions()
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Update feedback based on frame quality
     func updateFeedback(metrics: FrameQualityMetrics) {
         // Update stability indicator
@@ -68,7 +71,7 @@ class UIFeedbackManager: ObservableObject {
         // Update feedback state and message
         updateFeedbackState(metrics: metrics)
     }
-    
+
     /// Show success feedback animation
     func showSuccess(message: String) {
         withAnimation {
@@ -102,7 +105,7 @@ class UIFeedbackManager: ObservableObject {
             }
         }
     }
-    
+
     /// Reset feedback state
     func resetFeedbackState() {
         withAnimation {
@@ -113,9 +116,25 @@ class UIFeedbackManager: ObservableObject {
             showSuccessAnimation = false
         }
     }
-    
+
+    /// Show a focus animation at the given normalized point (0..1)
+    func showFocusAnimation(at point: CGPoint) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            withAnimation(.easeOut(duration: 0.3)) {
+                self.focusAnimationPoint = point
+            }
+            // Remove after short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                withAnimation(.easeIn(duration: 0.2)) {
+                    self.focusAnimationPoint = nil
+                }
+            }
+        }
+    }
+
     // MARK: - Private Methods
-    
+
     private func setupSubscriptions() {
         // Monitor guidance updates
         guidanceService.$guidanceMessage
@@ -123,17 +142,17 @@ class UIFeedbackManager: ObservableObject {
                 self?.updateGuidance(message)
             }
             .store(in: &cancellables)
-        
+
         // Monitor frame quality
         qualityAnalyzer.$lastQualityMetrics
-            .sink { [weak self] metrics in
+            .sink { [weak self] (metrics: FrameQualityMetrics?) in
                 if let metrics = metrics {
                     self?.updateFeedback(metrics: metrics)
                 }
             }
             .store(in: &cancellables)
     }
-    
+
     private func updateROIHighlight(metrics: FrameQualityMetrics) {
         let color: Color
         let opacity: Double
@@ -154,7 +173,7 @@ class UIFeedbackManager: ObservableObject {
             roiOverlayOpacity = opacity
         }
     }
-    
+
     private func updateFeedbackState(metrics: FrameQualityMetrics) {
         let newState: FeedbackState
         let message: String
@@ -185,7 +204,7 @@ class UIFeedbackManager: ObservableObject {
         // Debounce rapid feedback changes
         debounceStateUpdate(state: newState, message: message, color: color)
     }
-    
+
     private func updateGuidance(_ message: String) {
         // Update guidance overlay
         withAnimation {
@@ -200,7 +219,7 @@ class UIFeedbackManager: ObservableObject {
             }
         }
     }
-    
+
     private func debounceStateUpdate(state: FeedbackState, message: String, color: Color) {
         feedbackTimer?.invalidate()
         
@@ -240,7 +259,7 @@ struct FeedbackStyle {
                 backgroundColor: .black.opacity(0.6),
                 textColor: .white,
                 icon: "camera.viewfinder",
-                animation: .none
+                animation: Animation.default
             )
         case .scanning:
             return FeedbackStyle(

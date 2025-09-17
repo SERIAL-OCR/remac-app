@@ -13,13 +13,15 @@ protocol CameraFrameDelegate: AnyObject {
 }
 
 // Enhanced CameraManager with comprehensive baseline metrics collection
-class CameraManager: NSObject, ObservableObject, ErrorMonitor {
+class CameraManager: NSObject, ObservableObject, ErrorMonitor, AVCaptureVideoDataOutputSampleBufferDelegate {
     @Published var isAuthorized = false
     @Published var error: String?
     @Published var previewBounds: CGRect = .zero
     @Published var isSessionRunning = false
     
-    private let session = AVCaptureSession()
+    // Internal session storage; exposed publicly via computed property for previews
+    private let internalSession = AVCaptureSession()
+    var session: AVCaptureSession { internalSession }
     private var videoOutput = AVCaptureVideoDataOutput()
     private var photoOutput = AVCapturePhotoOutput()
     private var previewLayer: AVCaptureVideoPreviewLayer?
@@ -39,7 +41,12 @@ class CameraManager: NSObject, ObservableObject, ErrorMonitor {
     @Published var currentFrameQuality: FrameQualityMetrics?
     @Published var isFrameStable: Bool = false
     @Published var frameQualityGuidance: String?
-    
+    // Expose current zoom factor for UI binding
+    @Published var zoomFactor: CGFloat = 1.0
+    // Expose device-supported zoom bounds for UI
+    @Published var minSupportedZoom: CGFloat = 1.0
+    @Published var maxSupportedZoom: CGFloat = 5.0
+
     // Auto-adjustment state
     @Published var isAutoAdjustEnabled: Bool = true {
         didSet {
@@ -65,6 +72,8 @@ class CameraManager: NSObject, ObservableObject, ErrorMonitor {
     private let recoveryManager: SerialScannerRecoveryManager
     
     private let logger = Logger(subsystem: "com.appleserialscanner.camera", category: "CameraManager")
+    // Persistence keys
+    private let userDefaultsZoomKey = "com.appleserialscanner.camera.lastZoomFactor"
     
     override init() {
         // Initialize Phase 7 services
@@ -95,21 +104,21 @@ class CameraManager: NSObject, ObservableObject, ErrorMonitor {
             self,
             selector: #selector(handleSessionInterruption),
             name: .AVCaptureSessionWasInterrupted,
-            object: session
+            object: internalSession
         )
         
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleSessionInterruptionEnded),
             name: .AVCaptureSessionInterruptionEnded,
-            object: session
+            object: internalSession
         )
         
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleSessionRuntimeError),
             name: .AVCaptureSessionRuntimeError,
-            object: session
+            object: internalSession
         )
     }
     
@@ -204,8 +213,8 @@ class CameraManager: NSObject, ObservableObject, ErrorMonitor {
     
     /// Phase 0: Enhanced camera setup with metadata collection
     private func setupSession() {
-        session.beginConfiguration()
-        defer { session.commitConfiguration() }
+        internalSession.beginConfiguration()
+        defer { internalSession.commitConfiguration() }
         
         // Configure device with optimal settings
         guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
@@ -216,10 +225,22 @@ class CameraManager: NSObject, ObservableObject, ErrorMonitor {
         do {
             try cameraControl.configureDevice(device)
             currentDevice = device
+            // Update supported zoom bounds
+            if #available(iOS 13.0, *) {
+                minSupportedZoom = device.minAvailableVideoZoomFactor
+                maxSupportedZoom = min(device.maxAvailableVideoZoomFactor, 10.0)
+            } else {
+                minSupportedZoom = 1.0
+                maxSupportedZoom = 5.0
+            }
+            // Sync published zoom factor with device initial value
+            DispatchQueue.main.async {
+                self.zoomFactor = device.videoZoomFactor
+            }
             
             let input = try AVCaptureDeviceInput(device: device)
-            if session.canAddInput(input) {
-                session.addInput(input)
+            if internalSession.canAddInput(input) {
+                internalSession.addInput(input)
             }
             
             configureVideoOutput()
@@ -227,9 +248,11 @@ class CameraManager: NSObject, ObservableObject, ErrorMonitor {
             
             // Start session on background thread
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                self?.session.startRunning()
+                self?.internalSession.startRunning()
                 DispatchQueue.main.async {
                     self?.isSessionRunning = true
+                    // Apply persisted zoom after session becomes active
+                    self?.applySavedZoomToDevice()
                 }
             }
             
@@ -389,43 +412,45 @@ class CameraManager: NSObject, ObservableObject, ErrorMonitor {
         videoOutput.alwaysDiscardsLateVideoFrames = true
         let queue = DispatchQueue(label: "com.appleserialscanner.camera.frames", qos: .userInitiated)
         videoOutput.setSampleBufferDelegate(self, queue: queue)
-        if session.canAddOutput(videoOutput) {
-            session.addOutput(videoOutput)
+        if internalSession.canAddOutput(videoOutput) {
+            internalSession.addOutput(videoOutput)
         }
     }
     
     private func configurePhotoOutput() {
-        if session.canAddOutput(photoOutput) {
-            session.addOutput(photoOutput)
+        if internalSession.canAddOutput(photoOutput) {
+            internalSession.addOutput(photoOutput)
         }
     }
     
     func startSession() {
-        guard !session.isRunning else {
+        guard !internalSession.isRunning else {
             print("Camera session already running")
             return
         }
         
         print("Starting camera session...")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.session.startRunning()
+            self?.internalSession.startRunning()
             
             DispatchQueue.main.async {
-                self?.isSessionRunning = self?.session.isRunning ?? false
+                self?.isSessionRunning = self?.internalSession.isRunning ?? false
                 print("Camera session running: \(self?.isSessionRunning ?? false)")
+                // Apply saved zoom when session has started
+                self?.applySavedZoomToDevice()
             }
         }
     }
     
     func stopSession() {
-        guard session.isRunning else {
+        guard internalSession.isRunning else {
             print("Camera session already stopped")
             return
         }
         
         print("Stopping camera session...")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.session.stopRunning()
+            self?.internalSession.stopRunning()
             
             DispatchQueue.main.async {
                 self?.isSessionRunning = false
@@ -437,7 +462,7 @@ class CameraManager: NSObject, ObservableObject, ErrorMonitor {
     func getPreviewLayer() -> AVCaptureVideoPreviewLayer? {
         guard previewLayer == nil else { return previewLayer }
         
-        let layer = AVCaptureVideoPreviewLayer(session: session)
+        let layer = AVCaptureVideoPreviewLayer(session: internalSession)
         layer.videoGravity = .resizeAspectFill
         layer.needsDisplayOnBoundsChange = true
         
@@ -445,20 +470,90 @@ class CameraManager: NSObject, ObservableObject, ErrorMonitor {
         return layer
     }
     
-    func updatePreviewLayerBounds(_ bounds: CGRect) {
-        guard bounds.width > 0 && bounds.height > 0 else {
-            print("Invalid preview bounds: \(bounds)")
-            return
+    // MARK: - Zoom control
+    
+    /// Set the camera zoom factor. This will clamp to the device's supported range, persist the value,
+    /// and optionally animate the change using ramp(toVideoZoomFactor:rate:) when available.
+    func setZoomFactor(_ factor: CGFloat, animated: Bool = true) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // Clamp to sensible bounds first
+            var target = max(1.0, factor)
+            if let device = self.currentDevice {
+                target = min(max(target, self.minZoomForDevice(device)), self.maxZoomForDevice(device))
+            }
+            
+            // Persist immediately so state survives crashes/terminations
+            UserDefaults.standard.set(Double(target), forKey: self.userDefaultsZoomKey)
+            
+            guard let device = self.currentDevice else {
+                DispatchQueue.main.async {
+                    self.zoomFactor = target
+                }
+                return
+            }
+            
+            do {
+                try device.lockForConfiguration()
+                
+                if animated {
+                    // Use ramping API for a smooth animated zoom when available (iOS 11+)
+                    if #available(iOS 11.0, *) {
+                        device.ramp(toVideoZoomFactor: target, rate: 3.0)
+                    } else {
+                        device.videoZoomFactor = target
+                    }
+                } else {
+                    device.videoZoomFactor = target
+                }
+                
+                device.unlockForConfiguration()
+                
+                DispatchQueue.main.async {
+                    // Update published property so UI reflects the authoritative value
+                    self.zoomFactor = device.videoZoomFactor
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.error = "Failed to set zoom: \(error.localizedDescription)"
+                }
+                return
+            }
         }
-        
-        previewBounds = bounds
-        previewLayer?.frame = bounds
-        
-        print("Updated preview layer bounds: \(bounds)")
+    }
+    
+    /// Reset camera-related settings to reasonable defaults.
+    func resetCameraSettings() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            // Reset persisted zoom to default and apply to device
+            UserDefaults.standard.set(Double(1.0), forKey: self.userDefaultsZoomKey)
+            self.setZoomFactor(1.0, animated: true)
+            
+            // Try to restore common modes on the device
+            if let device = self.currentDevice {
+                do {
+                    try device.lockForConfiguration()
+                    if device.isFocusModeSupported(.continuousAutoFocus) {
+                        device.focusMode = .continuousAutoFocus
+                    }
+                    if device.isExposureModeSupported(.continuousAutoExposure) {
+                        device.exposureMode = .continuousAutoExposure
+                    }
+                    if device.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+                        device.whiteBalanceMode = .continuousAutoWhiteBalance
+                    }
+                    device.unlockForConfiguration()
+                } catch {
+                    // ignore failures for best-effort reset
+                }
+            }
+        }
     }
     
     func capturePhoto(delegate: AVCapturePhotoCaptureDelegate) {
-        guard session.isRunning else {
+        guard internalSession.isRunning else {
             print("Cannot capture photo - session not running")
             return
         }

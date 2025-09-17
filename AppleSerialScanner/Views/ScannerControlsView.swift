@@ -1,29 +1,38 @@
 import SwiftUI
+#if os(iOS) || targetEnvironment(macCatalyst)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 /// Interactive scanner controls with haptic feedback
 struct ScannerControlsView: View {
     @ObservedObject var feedbackManager: UIFeedbackManager
     @ObservedObject var accessibilityManager: AccessibilityManager
-    
+
     let onTapToFocus: (CGPoint) -> Void
     let onZoom: (CGFloat) -> Void
-    
+
     @GestureState private var dragState = CGSize.zero
     @State private var lastScale: CGFloat = 1.0
-    
+
     var body: some View {
         GeometryReader { geometry in
             // Invisible interactive layer
             Color.clear
                 .contentShape(Rectangle())
-                // Tap gesture for focus
-                .onTapGesture { location in
-                    let point = CGPoint(
-                        x: location.x / geometry.size.width,
-                        y: location.y / geometry.size.height
-                    )
-                    handleTap(at: point)
-                }
+                // Single tap via zero-distance drag to obtain location
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onEnded { value in
+                            let location = value.location
+                            let point = CGPoint(
+                                x: location.x / geometry.size.width,
+                                y: location.y / geometry.size.height
+                            )
+                            handleTap(at: point)
+                        }
+                )
                 // Magnification gesture for zoom
                 .gesture(
                     MagnificationGesture()
@@ -44,18 +53,22 @@ struct ScannerControlsView: View {
                 .accessibilityHint("Tap to focus, pinch to zoom")
         }
     }
-    
+
     private func handleTap(at point: CGPoint) {
         // Provide haptic feedback
+        #if os(iOS) || targetEnvironment(macCatalyst)
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()
-        
+        #elseif os(macOS)
+        NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
+        #endif
+
         // Call focus handler
         onTapToFocus(point)
-        
+
         // Update UI feedback
         feedbackManager.showFocusAnimation(at: point)
-        
+
         // Voice guidance if enabled
         if accessibilityManager.isVoiceGuidanceEnabled {
             accessibilityManager.provideGuidance(
@@ -64,37 +77,50 @@ struct ScannerControlsView: View {
             )
         }
     }
-    
+
     private func handleZoom(scale: CGFloat) {
         // Calculate zoom factor
         let delta = (scale - 1.0) * 0.5
         let newScale = lastScale * (1.0 + delta)
-        
+
         // Limit zoom range
         let limitedScale = min(max(newScale, 1.0), 5.0)
-        
+
         // Call zoom handler
         onZoom(limitedScale)
-        
+
         // Provide subtle haptic feedback
         if abs(limitedScale - lastScale) > 0.1 {
+            #if os(iOS) || targetEnvironment(macCatalyst)
             let generator = UIImpactFeedbackGenerator(style: .soft)
-            generator.impactOccurred(intensity: 0.5)
+            // soft style may not support intensity on all OS versions; guard for API
+            if #available(iOS 13.0, *) {
+                generator.impactOccurred(intensity: 0.5)
+            } else {
+                generator.impactOccurred()
+            }
+            #elseif os(macOS)
+            NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
+            #endif
         }
     }
-    
+
     private func handleReset() {
         // Reset zoom
         lastScale = 1.0
         onZoom(1.0)
-        
+
         // Reset feedback state
         feedbackManager.resetFeedbackState()
-        
+
         // Provide feedback
+        #if os(iOS) || targetEnvironment(macCatalyst)
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
-        
+        #elseif os(macOS)
+        NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+        #endif
+
         if accessibilityManager.isVoiceGuidanceEnabled {
             accessibilityManager.provideGuidance(
                 for: .waiting,
@@ -108,7 +134,7 @@ struct ScannerControlsView: View {
 struct FocusAnimationView: View {
     let point: CGPoint
     @State private var isAnimating = false
-    
+
     var body: some View {
         ZStack {
             // Outer circle
@@ -116,7 +142,7 @@ struct FocusAnimationView: View {
                 .stroke(Color.white, lineWidth: 1.5)
                 .frame(width: isAnimating ? 100 : 40, height: isAnimating ? 100 : 40)
                 .opacity(isAnimating ? 0 : 0.8)
-            
+
             // Inner circle
             Circle()
                 .fill(Color.white)
@@ -135,7 +161,7 @@ struct FocusAnimationView: View {
 struct ZoomIndicatorView: View {
     let zoomLevel: CGFloat
     @State private var isVisible = false
-    
+
     var body: some View {
         Text(String(format: "%.1fx", zoomLevel))
             .font(.system(size: 14, weight: .medium))
@@ -149,7 +175,7 @@ struct ZoomIndicatorView: View {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isVisible = true
                 }
-                
+
                 // Auto-hide after delay
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -164,7 +190,7 @@ struct ZoomIndicatorView: View {
 struct InteractiveHelpOverlay: View {
     @Environment(\.dismiss) var dismiss
     @State private var currentStep = 0
-    
+
     let helpSteps = [
         HelpStep(
             title: "Tap to Focus",
@@ -182,32 +208,32 @@ struct InteractiveHelpOverlay: View {
             icon: "arrow.counterclockwise"
         )
     ]
-    
+
     var body: some View {
         ZStack {
             // Background dimming
             Color.black.opacity(0.7)
                 .edgesIgnoringSafeArea(.all)
-            
+
             // Help content
             VStack(spacing: 24) {
                 // Icon
                 Image(systemName: helpSteps[currentStep].icon)
                     .font(.system(size: 44))
                     .foregroundColor(.white)
-                
+
                 // Text
                 VStack(spacing: 8) {
                     Text(helpSteps[currentStep].title)
                         .font(.title2)
                         .fontWeight(.bold)
-                    
+
                     Text(helpSteps[currentStep].message)
                         .font(.body)
                         .multilineTextAlignment(.center)
                 }
                 .foregroundColor(.white)
-                
+
                 // Navigation
                 HStack(spacing: 20) {
                     if currentStep > 0 {
@@ -217,7 +243,7 @@ struct InteractiveHelpOverlay: View {
                             }
                         }
                     }
-                    
+
                     if currentStep < helpSteps.count - 1 {
                         Button("Next") {
                             withAnimation {

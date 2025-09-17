@@ -1,9 +1,9 @@
 import Foundation
 import Vision
-import UIKit
 import AVFoundation
 import CoreMedia
 import CoreVideo
+import CoreGraphics
 
 /// Specialized optimizations for iPad serial scanning
 class IPadSerialScannerOptimizer {

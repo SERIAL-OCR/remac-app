@@ -152,9 +152,47 @@ struct DeviceTypeAwareScannerView: View {
 struct Phase1ScannerOverlayView: View {
     @ObservedObject var viewModel: SerialScannerViewModel
     let scannerType: ScannerType
-    
+
     var body: some View {
         VStack {
+            // New: editable white search bar / real-time text display
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+
+                    // Bind the TextField to the viewModel.recognizedText so it's editable
+                    TextField("Recognized text", text: Binding(
+                        get: { viewModel.recognizedText },
+                        set: { newValue in
+                            viewModel.recognizedText = newValue
+                        }
+                    ))
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .foregroundColor(.black)
+
+                    if !viewModel.recognizedText.isEmpty {
+                        Button(action: {
+                            // Trigger submission of the edited/recognized text
+                            Task { @MainActor in
+                                viewModel.submitRecognizedText()
+                            }
+                        }) {
+                            Image(systemName: "arrow.right.circle.fill")
+                                .foregroundColor(.blue)
+                        }
+                    }
+                }
+                .padding(10)
+                .background(Color.white)
+                .cornerRadius(10)
+                .shadow(radius: 2)
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .padding(.top, 12)
+
             // Top status bar with Phase 2 ROI indicator
             HStack {
                 // Scanner type indicator with ROI status
@@ -169,9 +207,9 @@ struct Phase1ScannerOverlayView: View {
                 .padding(.vertical, 6)
                 .background(Color.black.opacity(0.6))
                 .cornerRadius(8)
-                
+
                 Spacer()
-                
+
                 // Baseline metrics toggle
                 Button(action: viewModel.toggleBaselineMetrics) {
                     Image(systemName: "chart.bar.fill")
@@ -181,9 +219,9 @@ struct Phase1ScannerOverlayView: View {
                 .padding()
             }
             .padding(.top)
-            
+
             Spacer()
-            
+
             // Phase 2: Enhanced guidance text for ROI scanning
             Text(getPhase2GuidanceText())
                 .font(.headline)
@@ -193,7 +231,7 @@ struct Phase1ScannerOverlayView: View {
                 .background(Color.black.opacity(0.7))
                 .cornerRadius(12)
                 .padding(.horizontal)
-            
+
             // Recognition results with ROI context
             if !viewModel.recognizedText.isEmpty {
                 HStack {
@@ -201,12 +239,12 @@ struct Phase1ScannerOverlayView: View {
                         Text("Detected in ROI: \(viewModel.recognizedText)")
                             .font(.subheadline)
                             .foregroundColor(.white)
-                        
+
                         Text("Confidence: \(Int(viewModel.bestConfidence * 100))% • \(getROIStatus())")
                             .font(.caption)
                             .foregroundColor(confidenceColor)
                     }
-                    
+
                     Spacer()
                 }
                 .padding()
@@ -214,7 +252,41 @@ struct Phase1ScannerOverlayView: View {
                 .cornerRadius(8)
                 .padding(.horizontal)
             }
-            
+
+            // New: Zoom slider (white UI) - placed above control buttons
+            VStack(spacing: 6) {
+                HStack {
+                    Text("Zoom")
+                        .font(.subheadline)
+                        .foregroundColor(.black)
+
+                    Spacer()
+
+                    // Show the smoothed/displayed zoom value so UI matches camera ramping
+                    Text(String(format: "%.2fx", viewModel.displayedZoom))
+                        .font(.caption)
+                        .foregroundColor(.black)
+                }
+
+                // Use viewModel-provided min/max supported zoom for the Slider range instead of hardcoded 1.0...5.0 so slider clamps correctly to device capability (same change as SerialScannerView).
+                Slider(value: Binding(get: {
+                    Double(viewModel.displayedZoom)
+                }, set: { newVal in
+                    viewModel.setDisplayedZoomTarget(CGFloat(newVal))
+                }), in: Double(viewModel.minSupportedZoom)...Double(viewModel.maxSupportedZoom), onEditingChanged: { editing in
+                    if !editing {
+                        viewModel.setZoomFactor(viewModel.displayedZoomTarget)
+                    }
+                })
+                .accentColor(.blue)
+            }
+            .padding(10)
+            .background(Color.white)
+            .cornerRadius(10)
+            .shadow(radius: 2)
+            .padding(.horizontal)
+            .padding(.bottom, 6)
+
             // Control buttons
             HStack(spacing: 20) {
                 Button(action: viewModel.startScanning) {
@@ -228,7 +300,7 @@ struct Phase1ScannerOverlayView: View {
                     .cornerRadius(8)
                 }
                 .disabled(viewModel.isScanning)
-                
+
                 Button(action: viewModel.stopScanning) {
                     HStack {
                         Image(systemName: "stop.fill")
@@ -247,34 +319,34 @@ struct Phase1ScannerOverlayView: View {
             BaselineMetricsDashboard(viewModel: viewModel)
         }
     }
-    
+
     private var scannerTypeIcon: String {
         switch scannerType {
         case .visionKit: return "eye.fill"
         case .legacy: return "camera.fill"
         }
     }
-    
+
     private var scannerTypeColor: Color {
         switch scannerType {
         case .visionKit: return .green
         case .legacy: return .orange
         }
     }
-    
+
     private var scannerTypeText: String {
         switch scannerType {
         case .visionKit: return "VisionKit"
         case .legacy: return "Legacy"
         }
     }
-    
+
     private var confidenceColor: Color {
         if viewModel.bestConfidence > 0.8 { return .green }
         else if viewModel.bestConfidence > 0.6 { return .orange }
         else { return .red }
     }
-    
+
     // Phase 2: Enhanced guidance text for ROI scanning
     private func getPhase2GuidanceText() -> String {
         switch scannerType {
@@ -292,7 +364,7 @@ struct Phase1ScannerOverlayView: View {
             }
         }
     }
-    
+
     // Phase 2: ROI status indicator
     private func getROIStatus() -> String {
         switch scannerType {

@@ -128,9 +128,21 @@ class SerialScannerPipeline {
             )
             
             // Phase 5: Character Disambiguation
-            let disambiguatedCandidates = ambiguityResolver.resolveCandidates(
-                fastOCRResult.textCandidates
-            )
+            let disambiguationResult = ambiguityResolver.resolveAmbiguities(in: fastOCRResult.textCandidates)
+            // Map resolved candidates back to TextCandidate for validation
+            let disambiguatedCandidates: [TextCandidate] = disambiguationResult.resolvedCandidates.map { resolved in
+                let original = resolved.originalCandidate
+                return TextCandidate(
+                    text: resolved.resolvedText,
+                    confidence: resolved.adjustedConfidence,
+                    boundingBox: original.boundingBox,
+                    source: original.ocrSource,
+                    imageIndex: original.imageIndex,
+                    isInverted: original.isInverted,
+                    alternativeRank: original.alternativeRank,
+                    observationIndex: original.observationIndex
+                )
+            }
             
             // Phase 6: Serial Validation
             let validatedResults = serialValidator.validateCandidates(
@@ -138,23 +150,33 @@ class SerialScannerPipeline {
             )
             
             // Phase 7: Stability Tracking
-            let stabilityResult = stabilityTracker.updateWithCandidates(
-                validatedResults.validCandidates
-            )
+            // Use the top validated candidate (if any) for stability tracking
+            let stabilityResult: StabilityResult = {
+                if let top = validatedResults.allValidCandidates.first {
+                    return stabilityTracker.trackCandidate(top)
+                } else {
+                    return StabilityResult(state: .seeking, stableCandidate: nil, guidanceMessage: "Scanning for serial number...", shouldLock: false, confidence: 0.0)
+                }
+            }()
             
             let totalProcessingTime = CFAbsoluteTimeGetCurrent() - startTime
             
             return PipelineResult.success(
-                candidates: validatedResults.validCandidates,
-                stabilityState: stabilityResult,
-                processingTime: totalProcessingTime,
-                surfaceClassification: surfaceClassification
+                screenDetection: screenDetectionResult,
+                surfaceClassification: surfaceClassification,
+                preprocessing: preprocessingResult,
+                fastOCR: fastOCRResult,
+                resolvedCandidates: disambiguationResult.resolvedCandidates,
+                validation: validatedResults,
+                stability: stabilityResult,
+                accurateOCR: nil,
+                totalProcessingTime: totalProcessingTime
             )
             
         } catch {
             logger.error("Pipeline processing failed: \(error.localizedDescription)")
             return PipelineResult.error(
-                error: error,
+                error,
                 processingTime: CFAbsoluteTimeGetCurrent() - startTime
             )
         }
@@ -165,34 +187,33 @@ class SerialScannerPipeline {
         on images: [ProcessedImage],
         frameBuffer: CVPixelBuffer,
         cameraMetadata: [String: Any]?,
-        stabilityState: StabilityTracker.StabilityState,
+        stabilityState: StabilityState,
         frameId: UUID
     ) async -> FastOCRResult {
         
         return await withCheckedContinuation { continuation in
             let metricsStabilityState: BaselineMetricsCollector.FrameMetrics.StabilityState
             
+            // Map pipeline StabilityState to Baseline metrics stability state
             switch stabilityState {
-            case .unstable:
+            case .seeking, .candidate:
                 metricsStabilityState = .unstable
-            case .stabilizing:
+            case .stabilized:
                 metricsStabilityState = .stabilizing
             case .locked:
                 metricsStabilityState = .locked
-            case .confirmed:
-                metricsStabilityState = .confirmed
             }
             
             visionTextRecognizer.performFastOCR(
-                on: images,
-                frameBuffer: frameBuffer,
-                cameraMetadata: cameraMetadata,
-                stabilityState: metricsStabilityState
-            ) { result in
-                continuation.resume(returning: result)
-            }
-        }
-    }
+                 on: images,
+                 frameBuffer: frameBuffer,
+                 cameraMetadata: cameraMetadata,
+                 stabilityState: metricsStabilityState
+             ) { result in
+                 continuation.resume(returning: result)
+             }
+         }
+     }
     
     /// Reset the entire pipeline state
     func reset() {

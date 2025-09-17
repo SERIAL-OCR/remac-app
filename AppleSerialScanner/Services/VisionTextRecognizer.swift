@@ -234,13 +234,22 @@ class VisionTextRecognizer {
             
             let result = AccurateOCRResult(
                 textCandidates: allCandidates,
-                processingTime: processingTime
+                processingTime: processingTime,
+                error: nil
             )
-            
+
             DispatchQueue.main.async {
                 completion(result)
             }
         }
+    }
+    
+    /// Reset internal state and stop any ongoing processing
+    func reset() {
+        // Stop any in-flight processing and clear throttling state
+        isProcessing = false
+        lastProcessingTime = 0
+        logger.debug("VisionTextRecognizer reset")
     }
     
     // MARK: - Phase 0: Baseline Metrics Implementation

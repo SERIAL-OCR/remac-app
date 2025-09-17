@@ -9,8 +9,9 @@ struct CleanIPadScannerView: View {
     
     var body: some View {
         ZStack {
-            // Camera preview
-            CameraPreviewView(previewLayer: viewModel.previewLayer)
+            // Camera preview 
+            // Use SharedCameraView which accepts an optional AVCaptureVideoPreviewLayer
+            SharedCameraView(previewLayer: viewModel.previewLayer)
                 .ignoresSafeArea()
             
             // Scanner overlay with rectangular ROI

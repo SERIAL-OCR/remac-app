@@ -1,5 +1,9 @@
 import SwiftUI
+#if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 struct CleanScannerOverlayView: View {
     @ObservedObject var viewModel: SerialScannerViewModel
@@ -10,6 +14,7 @@ struct CleanScannerOverlayView: View {
     private func calculateROI(size: CGSize) -> CGRect {
         let roiWidth: CGFloat
         let roiHeight: CGFloat
+        #if os(iOS)
         if UIDevice.current.userInterfaceIdiom == .pad {
             roiWidth = min(size.width * 0.7, 600)
             roiHeight = roiWidth * 0.25
@@ -17,6 +22,11 @@ struct CleanScannerOverlayView: View {
             roiWidth = size.width * 0.8
             roiHeight = roiWidth * 0.3
         }
+        #else
+        // macOS: treat as iPad-like layout for larger screens
+        roiWidth = min(size.width * 0.7, 800)
+        roiHeight = roiWidth * 0.25
+        #endif
         return CGRect(
             x: (size.width - roiWidth) / 2.0,
             y: (size.height - roiHeight) / 2.0,
@@ -90,11 +100,12 @@ struct CleanScannerOverlayView: View {
                         .background(Color.black.opacity(0.6))
                         .cornerRadius(8)
                         .shadow(color: .black.opacity(0.5), radius: 4, x: 0, y: 2)
-                        .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 80 : 50)
+                        .padding(.bottom, bottomPadding())
                         .multilineTextAlignment(.center)
                 }
                 
                 // Optional preset selector button - positioned for iPad
+                #if os(iOS)
                 if UIDevice.current.userInterfaceIdiom == .pad {
                     VStack {
                         HStack {
@@ -116,9 +127,18 @@ struct CleanScannerOverlayView: View {
                         Spacer()
                     }
                 }
+                #endif
             }
             .compositingGroup()
         }
+    }
+
+    private func bottomPadding() -> CGFloat {
+        #if os(iOS)
+        return UIDevice.current.userInterfaceIdiom == .pad ? 80 : 50
+        #else
+        return 80
+        #endif
     }
 }
 

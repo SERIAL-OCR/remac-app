@@ -35,8 +35,8 @@ class SerialScannerRecoveryManager {
     }
     
     /// Handle pipeline failure
-    func handlePipelineFailure(_ error: ScanningError) -> AnyPublisher<RecoveryStatus, Never> {
-        let recoverySubject = PassthroughSubject<RecoveryStatus, Never>()
+    func handlePipelineFailure(_ error: ScanningError) -> AnyPublisher<RecoveryOutcome, Never> {
+        let recoverySubject = PassthroughSubject<RecoveryOutcome, Never>()
         
         // Check if recovery is possible
         guard error.isRecoverable else {
@@ -85,7 +85,7 @@ class SerialScannerRecoveryManager {
     
     private func performStagedRecovery(
         error: ScanningError,
-        subject: PassthroughSubject<RecoveryStatus, Never>
+        subject: PassthroughSubject<RecoveryOutcome, Never>
     ) {
         // Start diagnostics collection
         diagnostics.startDiagnostics()
@@ -164,7 +164,7 @@ class SerialScannerRecoveryManager {
     }
     
     private func executeRecoveryStage(_ stage: RecoveryStage) -> AnyPublisher<Bool, Error> {
-        logger.info("Executing recovery stage: \(stage)")
+        logger.info("Executing recovery stage: \(String(describing: stage))")
         
         return Future { promise in
             // Execute stage-specific recovery actions
@@ -245,14 +245,17 @@ class SerialScannerRecoveryManager {
     
     private func checkSystemHealth(_ health: SystemHealthMetrics) {
         // Check for conditions requiring proactive recovery
-        if health.memoryUsage > 0.9 || health.cpuUsage > 0.8 {
-            logger.warning("Critical system metrics detected, initiating proactive recovery")
-            
+        // Use simplified metrics available on SystemHealthMetrics
+        // Trigger proactive recovery if there are system warnings or storage is critically low
+        let lowStorageThreshold: UInt64 = 100 * 1024 * 1024 // 100 MB
+        if health.systemWarnings > 0 || health.storageAvailable < lowStorageThreshold {
+            logger.warning("Critical system metrics detected (warnings: \(health.systemWarnings), storageAvailable: \(health.storageAvailable)) - initiating proactive recovery")
+
             let error = ScanningError.systemResource(
                 code: "RESOURCE_CRITICAL",
                 description: "System resources critical"
             )
-            
+
             handlePipelineFailure(error)
                 .sink { _ in }
                 .store(in: &cancellables)
@@ -281,7 +284,7 @@ enum PipelineState {
     case failed
 }
 
-enum RecoveryStatus {
+enum RecoveryOutcome {
     case succeeded
     case failed
     case inProgress

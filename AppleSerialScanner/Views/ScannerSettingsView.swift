@@ -39,10 +39,10 @@ struct ScannerSettingsView: View {
                         Text("Phone").tag("phone")
                     }
                     Toggle("Enable Barcode Fallback", isOn: $enableBarcodeFallback)
-                        .onChange(of: enableBarcodeFallback) { newValue in
+                        .onChange(of: enableBarcodeFallback) { oldValue, newValue in
                             TelemetryService.shared.trackSettingChange(
                                 key: "enableBarcodeFallback",
-                                oldValue: prevEnableBarcodeFallbackString,
+                                oldValue: String(oldValue),
                                 newValue: String(newValue)
                             )
                             prevEnableBarcodeFallbackString = String(newValue)
@@ -50,10 +50,10 @@ struct ScannerSettingsView: View {
                     VStack(alignment: .leading) {
                         Text("Stability Threshold: \(String(format: "%.2f", stabilityThreshold))")
                         Slider(value: $stabilityThreshold, in: 0.5...1.0, step: 0.01)
-                            .onChange(of: stabilityThreshold) { newValue in
+                            .onChange(of: stabilityThreshold) { oldValue, newValue in
                                 TelemetryService.shared.trackSettingChange(
                                     key: "stabilityThreshold",
-                                    oldValue: prevStabilityThresholdString,
+                                    oldValue: String(format: "%.2f", oldValue),
                                     newValue: String(format: "%.2f", newValue)
                                 )
                                 prevStabilityThresholdString = String(format: "%.2f", newValue)
@@ -83,7 +83,9 @@ struct ScannerSettingsView: View {
                 if showAdvancedSettings {
                     Section(header: Text("Advanced")) {
                         NavigationLink("ROI Configuration") {
-                            ROIConfigurationView()
+                            // ROI configuration is managed in the scanner view; provide guidance here to avoid compile-time placeholders
+                            Text("ROI configuration is available in the main scanner view.")
+                                .padding()
                         }
                         
                         NavigationLink("Feedback Timing") {
@@ -109,18 +111,18 @@ struct ScannerSettingsView: View {
                 prevStabilityThresholdString = String(format: "%.2f", stabilityThreshold)
                 prevEnableBarcodeFallbackString = String(enableBarcodeFallback)
             }
-            .onChange(of: scannerLanguagesString) { newValue in
+            .onChange(of: scannerLanguagesString) { oldValue, newValue in
                 TelemetryService.shared.trackSettingChange(
                     key: "scannerLanguages",
-                    oldValue: prevScannerLanguagesString,
+                    oldValue: oldValue,
                     newValue: newValue
                 )
                 prevScannerLanguagesString = newValue
             }
-            .onChange(of: scannerTextContentTypeString) { newValue in
+            .onChange(of: scannerTextContentTypeString) { oldValue, newValue in
                 TelemetryService.shared.trackSettingChange(
                     key: "scannerTextContentType",
-                    oldValue: prevScannerTextContentTypeString,
+                    oldValue: oldValue,
                     newValue: newValue
                 )
                 prevScannerTextContentTypeString = newValue

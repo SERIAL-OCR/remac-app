@@ -1,5 +1,6 @@
 import Foundation
 import Vision
+import os
 
 /// Enhanced serial number validator with character confusion resolution
 /// and format enforcement for Apple serial numbers

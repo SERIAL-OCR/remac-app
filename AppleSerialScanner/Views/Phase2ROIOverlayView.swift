@@ -33,8 +33,8 @@ struct Phase2ROIOverlayView: View {
         .sheet(isPresented: $showROISettings) {
             ROIConfigurationView(configuration: $roiConfiguration, scannerType: scannerType)
         }
-        .onChange(of: roiConfiguration) { newConfig in
-            applyROIConfiguration(newConfig)
+        .onChange(of: roiConfiguration.name) { _ in
+            applyROIConfiguration(roiConfiguration)
         }
     }
     
@@ -46,13 +46,14 @@ struct Phase2ROIOverlayView: View {
         Path { path in
             // Add the full screen rectangle
             path.addRect(CGRect(origin: .zero, size: geometry.size))
-            
+
             // Subtract the ROI rectangle to create cutout
             let roiRect = calculateROIRect(in: geometry.size)
             path.addRect(roiRect)
         }
-        .fill(Color.black.opacity(0.6), style: FillStyle(eoFill: true))
-        .animation(.easeInOut(duration: 0.3), value: roiConfiguration)
+        // Changed to white overlay so only ROI shows camera content
+        .fill(Color.white.opacity(0.96), style: FillStyle(eoFill: true))
+        .animation(.easeInOut(duration: 0.3), value: roiConfiguration.name)
     }
     
     // MARK: - Scanning Window
@@ -80,7 +81,7 @@ struct Phase2ROIOverlayView: View {
             // Phase 2: Dynamic ROI label
             roiLabel(for: roiRect)
         }
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: roiConfiguration)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: roiConfiguration.name)
     }
     
     @ViewBuilder
@@ -207,22 +208,27 @@ struct Phase2ROIOverlayView: View {
             Text(getROIGuidanceText())
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.white)
+                .foregroundColor(.black) // dark text on white UI
                 .multilineTextAlignment(.center)
-            
+
             if !viewModel.recognizedText.isEmpty {
                 Text("Detected in ROI: \(viewModel.recognizedText)")
                     .font(.caption)
                     .foregroundColor(.green)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 4)
-                    .background(Color.black.opacity(0.7))
+                    .background(Color.white)
                     .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
             }
         }
         .padding()
-        .background(Color.black.opacity(0.5))
+        .background(Color.white)
         .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
         .padding(.horizontal)
     }
     

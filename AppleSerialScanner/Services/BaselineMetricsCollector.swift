@@ -4,6 +4,12 @@ import AVFoundation
 import CoreImage
 import os.log
 
+#if canImport(UIKit)
+import UIKit
+#else
+import AppKit
+#endif
+
 /// Phase 0: Production-quality baseline metrics collector for establishing scanner performance baselines
 /// Tracks per-frame metrics: OCR latency, confidence, glyph height, exposure/ISO, and stability time-to-lock
 @available(iOS 13.0, *)
@@ -34,25 +40,28 @@ final class BaselineMetricsCollector {
         
         enum StabilityState: String, CaseIterable {
             case unstable = "unstable"
-            case stabilizing = "stabilizing" 
+            case stabilizing = "stabilizing"
             case locked = "locked"
             case confirmed = "confirmed"
         }
     }
     
     struct OCRSettings {
-        let recognitionLevel: VNRequestRevision
+        let recognitionLevel: Int
         let usesLanguageCorrection: Bool
         let recognitionLanguages: [String]
         let minimumTextHeight: Float
         let revision: Int
-        
+
         init(from request: VNRecognizeTextRequest) {
-            self.recognitionLevel = request.revision
+            // VNRequestRevision may not be available across all SDK versions in this build environment;
+            // cast to Int for stability and to avoid compiler errors.
+            self.recognitionLevel = Int(request.revision)
             self.usesLanguageCorrection = request.usesLanguageCorrection
-            self.recognitionLanguages = request.recognitionLanguages ?? []
+            // recognitionLanguages may be non-optional depending on SDK; assign directly for compatibility
+            self.recognitionLanguages = request.recognitionLanguages
             self.minimumTextHeight = request.minimumTextHeight
-            self.revision = request.revision
+            self.revision = Int(request.revision)
         }
     }
     
@@ -191,11 +200,12 @@ final class BaselineMetricsCollector {
     
     /// Exports metrics for detailed analysis
     func exportMetricsForAnalysis() -> Data? {
-        return metricsQueue.sync {
+        return metricsQueue.sync { [weak self] in
+            guard let self = self else { return nil }
             do {
                 let exportData = [
-                    "sessionId": sessionId.uuidString,
-                    "frameMetrics": frameMetrics.map { metrics in
+                    "sessionId": self.sessionId.uuidString,
+                    "frameMetrics": self.frameMetrics.map { metrics in
                         [
                             "frameId": metrics.frameId.uuidString,
                             "timestamp": metrics.timestamp,
@@ -247,26 +257,28 @@ final class BaselineMetricsCollector {
     ) -> Float {
         guard !results.isEmpty,
               let frameBuffer = frameBuffer else { return 0.0 }
-        
+
         let frameHeight = Float(CVPixelBufferGetHeight(frameBuffer))
-        
+
         let glyphHeights = results.map { observation in
             let boundingBox = observation.boundingBox
-            return boundingBox.height * frameHeight
+            // boundingBox.height is CGFloat; convert to Float before multiplying
+            return Float(boundingBox.height) * frameHeight
         }
-        
+
         return glyphHeights.isEmpty ? 0.0 : glyphHeights.reduce(0, +) / Float(glyphHeights.count)
     }
-    
+
     private func extractCameraMetadata(from metadata: [String: Any]?) -> (Float?, Float?, String) {
         guard let metadata = metadata else {
             return (nil, nil, "unknown")
         }
-        
-        let exposure = metadata[AVMetadataObject.MetadataObjectType.face.rawValue] as? Float
+
+        // Be defensive: different platforms/SDKs may provide different metadata keys
+        let exposure = (metadata["Exposure"] as? Float) ?? (metadata["exposure"] as? Float) ?? (metadata["ExposureTime"] as? Float)
         let iso = metadata["ISO"] as? Float
         let focusMode = metadata["FocusMode"] as? String ?? "unknown"
-        
+
         return (exposure, iso, focusMode)
     }
     
@@ -318,7 +330,7 @@ final class BaselineMetricsCollector {
         guard !values.isEmpty else { return 0 }
         let sorted = values.sorted()
         let count = sorted.count
-        return count % 2 == 0 
+        return count % 2 == 0
             ? (sorted[count/2 - 1] + sorted[count/2]) / 2
             : sorted[count/2]
     }
@@ -395,6 +407,6 @@ final class BaselineMetricsCollector {
     
     deinit {
         NotificationCenter.default.removeObserver(self)
-        logger.info("BaselineMetricsCollector deinitialized for session: \(sessionId)")
+        logger.info("BaselineMetricsCollector deinitialized for session: \(self.sessionId)")
     }
 }

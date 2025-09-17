@@ -5,7 +5,9 @@
 //
 
 import Foundation
+#if canImport(UIKit)
 import UIKit
+#endif
 
 // MARK: - PowerManagementDelegate
 extension SerialScannerViewModel: @preconcurrency PowerManagementDelegate {
@@ -43,8 +45,11 @@ extension SerialScannerViewModel {
     func startPerformanceMonitoring() {
         // Monitor frame processing performance every 5 seconds
         Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            self?.logPerformanceMetrics()
-            self?.adaptProcessingBasedOnPerformance()
+            Task { @MainActor in
+                guard let self = self else { return }
+                self.logPerformanceMetrics()
+                self.adaptProcessingBasedOnPerformance()
+            }
         }
     }
     

@@ -441,7 +441,8 @@ class Phase3SerialOCRTuner {
     /// Update ROI for processing
     func updateROI(_ roi: CGRect) {
         currentROI = roi
-        logger.debug("Phase 3: ROI updated to \(roi)")
+        // Use explicit String(describing:) to avoid ambiguous interpolation with Logger APIs
+        logger.debug("Phase 3: ROI updated to \(String(describing: roi))")
     }
 }
 
@@ -471,22 +472,23 @@ struct Phase3OCRResult {
     let imageResolution: CGSize
     let roiUsed: CGRect?
     let error: Error?
-    
+
     init(
         candidates: [Phase3SerialCandidate],
         processingMode: Phase3ProcessingMode,
         processingTime: TimeInterval,
         imageResolution: CGSize,
-        roiUsed: CGRect?
+        roiUsed: CGRect?,
+        error: Error? = nil
     ) {
         self.candidates = candidates
         self.processingMode = processingMode
         self.processingTime = processingTime
         self.imageResolution = imageResolution
         self.roiUsed = roiUsed
-        self.error = nil
+        self.error = error
     }
-    
+
     static func error(_ error: Error, processingTime: TimeInterval) -> Phase3OCRResult {
         return Phase3OCRResult(
             candidates: [],
@@ -497,11 +499,11 @@ struct Phase3OCRResult {
             error: error
         )
     }
-    
+
     var isSuccess: Bool {
         return error == nil && !candidates.isEmpty
     }
-    
+
     var bestCandidate: Phase3SerialCandidate? {
         return candidates.first
     }

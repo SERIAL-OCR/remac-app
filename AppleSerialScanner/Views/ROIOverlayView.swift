@@ -33,7 +33,7 @@ struct ROIOverlayView: View {
                     )
                 
                 // ROI corner guides
-                ROICornerGuides(
+                ROIOverlayCornerGuides(
                     bounds: roiBounds,
                     cornerLength: cornerLength,
                     lineWidth: lineWidth,
@@ -71,31 +71,31 @@ struct ROIOverlayView: View {
 }
 
 /// Corner guide shapes for ROI visualization
-struct ROICornerGuides: View {
+struct ROIOverlayCornerGuides: View {
     let bounds: CGRect
     let cornerLength: CGFloat
     let lineWidth: CGFloat
     let color: Color
-    
+
     var body: some View {
         ZStack {
             // Top left corner
             CornerPath(length: cornerLength, lineWidth: lineWidth)
                 .stroke(color, lineWidth: lineWidth)
                 .position(x: bounds.minX, y: bounds.minY)
-            
+
             // Top right corner
             CornerPath(length: cornerLength, lineWidth: lineWidth)
                 .rotation(.degrees(90))
                 .stroke(color, lineWidth: lineWidth)
                 .position(x: bounds.maxX, y: bounds.minY)
-            
+
             // Bottom left corner
             CornerPath(length: cornerLength, lineWidth: lineWidth)
                 .rotation(.degrees(270))
                 .stroke(color, lineWidth: lineWidth)
                 .position(x: bounds.minX, y: bounds.maxY)
-            
+
             // Bottom right corner
             CornerPath(length: cornerLength, lineWidth: lineWidth)
                 .rotation(.degrees(180))
@@ -109,14 +109,14 @@ struct ROICornerGuides: View {
 struct CornerPath: Shape {
     let length: CGFloat
     let lineWidth: CGFloat
-    
+
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        
+
         path.move(to: CGPoint(x: 0, y: length))
         path.addLine(to: CGPoint(x: 0, y: lineWidth))
         path.addLine(to: CGPoint(x: length, y: lineWidth))
-        
+
         return path
     }
 }
