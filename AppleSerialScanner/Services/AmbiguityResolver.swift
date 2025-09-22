@@ -1,11 +1,13 @@
 import Foundation
 import os.log
+import CoreGraphics
 
 /// Resolves character ambiguities in Apple serial numbers using confusion matrices and Viterbi decoding
 @available(iOS 13.0, *)
 class AmbiguityResolver {
     // MARK: - Properties
     private let logger = Logger(subsystem: "com.appleserialscanner", category: "AmbiguityResolver")
+    private let mlDisambiguator = CharacterDisambiguator()
     
     // Character confusion matrix - penalties for common OCR mistakes
     private let confusionMatrix: [Character: [(Character, Float)]] = [
@@ -33,7 +35,7 @@ class AmbiguityResolver {
         logger.debug("AmbiguityResolver initialized")
     }
     
-    /// Resolves character ambiguities using Viterbi decoding with confusion penalties
+    /// Resolves character ambiguities using ML CharacterDisambiguator (facade over ML while preserving API)
     func resolveAmbiguities(in candidates: [TextCandidate]) -> AmbiguityResolutionResult {
         let startTime = CFAbsoluteTimeGetCurrent()
         
@@ -59,85 +61,49 @@ class AmbiguityResolver {
     
     private func resolveSingleCandidate(_ candidate: TextCandidate) -> ResolvedCandidate {
         let originalText = candidate.text
-        let (resolvedText, adjustments) = applyViterbiDecoding(originalText)
-        
-        // Calculate confidence adjustment based on alphabet compliance and adjustments made
-        let alphabetPenalty = calculateAlphabetPenalty(resolvedText)
-        let adjustmentPenalty = Float(adjustments.count) * 0.05 // 5% penalty per adjustment
-        let adjustedConfidence = max(0.0, candidate.confidence - alphabetPenalty - adjustmentPenalty)
-        
-        // Convert adjustments to corrections array
-        let corrections = adjustments.map { adj in
-            "\(adj.originalCharacter) → \(adj.resolvedCharacter)"
-        }
+        let bbox = candidate.boundingBox
+        let mlResult = disambiguateWithMLSynchronously(text: originalText, boundingBox: bbox)
         
         return ResolvedCandidate(
             originalCandidate: candidate,
-            resolvedText: resolvedText,
-            adjustedConfidence: adjustedConfidence,
-            hasAdjustments: !adjustments.isEmpty,
-            corrections: corrections
+            resolvedText: mlResult.resolvedText,
+            adjustedConfidence: mlResult.overallConfidence,
+            hasAdjustments: !mlResult.corrections.isEmpty,
+            corrections: mlResult.corrections
         )
     }
     
-    private func applyViterbiDecoding(_ text: String) -> (String, [CharacterAdjustment]) {
-        var result = ""
-        var adjustments: [CharacterAdjustment] = []
+    // MARK: - ML Bridge
+    private func disambiguateWithMLSynchronously(text: String, boundingBox: CGRect) -> (resolvedText: String, overallConfidence: Float, corrections: [String]) {
+        let semaphore = DispatchSemaphore(value: 0)
+        var resolvedTextOut = text
+        var overallConfidenceOut: Float = 0.0
+        var correctionsOut: [String] = []
         
-        for (index, char) in text.enumerated() {
-            let resolvedChar = resolveCharacter(char, position: index, context: text)
-            result.append(resolvedChar.character)
-            
-            if resolvedChar.wasAdjusted {
-                adjustments.append(CharacterAdjustment(
-                    position: index,
-                    originalCharacter: char,
-                    resolvedCharacter: resolvedChar.character,
-                    confidence: resolvedChar.confidence
-                ))
-            }
-        }
-        
-        return (result, adjustments)
-    }
-    
-    private func resolveCharacter(_ char: Character, position: Int, context: String) -> ResolvedCharacter {
-        // If character is already in allowed set, keep it
-        if allowedCharacters.contains(char) {
-            return ResolvedCharacter(character: char, confidence: 1.0, wasAdjusted: false)
-        }
-        
-        // Find best replacement using confusion matrix
-        if let confusions = confusionMatrix[char] {
-            // Sort by penalty (lower is better) and prefer allowed characters
-            let sortedConfusions = confusions.sorted { confusion1, confusion2 in
-                let allowed1 = allowedCharacters.contains(confusion1.0)
-                let allowed2 = allowedCharacters.contains(confusion2.0)
-                
-                if allowed1 && !allowed2 { return true }
-                if !allowed1 && allowed2 { return false }
-                return confusion1.1 < confusion2.1 // Lower penalty is better
-            }
-            
-            if let bestReplacement = sortedConfusions.first,
-               allowedCharacters.contains(bestReplacement.0) {
-                let confidence = 1.0 - bestReplacement.1 // Convert penalty to confidence
-                return ResolvedCharacter(
-                    character: bestReplacement.0,
-                    confidence: confidence,
-                    wasAdjusted: true
+        Task { @MainActor in
+            do {
+                let ambiguityScore = mlDisambiguator.getAmbiguityScore(for: text)
+                let result = try await mlDisambiguator.disambiguateCharacters(
+                    text: text,
+                    glyphBoundingBoxes: [],
+                    croppedGlyphs: nil,
+                    ambiguityScore: ambiguityScore
                 )
+                resolvedTextOut = result.correctedText
+                overallConfidenceOut = result.overallConfidence
+                correctionsOut = result.corrections.map { corr in
+                    "\(corr.originalChar) → \(corr.correctedChar)"
+                }
+            } catch {
+                self.logger.error("ML disambiguation failed: \(error.localizedDescription)")
             }
+            semaphore.signal()
         }
-        
-        // If no good replacement found, try direct mapping to similar allowed characters
-        let directMapping = findDirectMapping(char)
-        return ResolvedCharacter(
-            character: directMapping,
-            confidence: directMapping == char ? 1.0 : 0.5,
-            wasAdjusted: directMapping != char
-        )
+        _ = semaphore.wait(timeout: .now() + 1.0)
+        return (resolvedTextOut, overallConfidenceOut, correctionsOut)
     }
+    
+    // Legacy heuristic methods retained for reference but unused; ML path is authoritative now.
     
     private func findDirectMapping(_ char: Character) -> Character {
         // Direct mappings for characters not in confusion matrix

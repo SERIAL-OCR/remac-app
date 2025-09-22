@@ -1,7 +1,9 @@
     import Foundation
+    import CoreGraphics
 
 /// Validates Apple serial numbers with strict alphabet and length constraints
 class SerialValidator {
+    private let mlClassifier = SerialFormatClassifier()
     // Apple serial alphabet (excludes I, O, Q to avoid confusion)
     private static let allowedCharacters = Set("ABCDEFGHJKLMNPRSTUVWXYZ0123456789")
     
@@ -31,63 +33,55 @@ class SerialValidator {
         }
     }
     
-    /// Validates a serial number candidate
+    /// Validates a serial number candidate using ML classifier (facade over ML while preserving API)
     func validateSerial(_ text: String) -> SerialValidationResult {
         let cleanText = text.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         
-        // Length check
-        guard cleanText.count >= minimumLength && cleanText.count <= maximumLength else {
+        // Provide a reasonable default bounding box when only text is available
+        // Use a horizontal box to avoid divide-by-zero and reflect serial-like geometry
+        let defaultBoundingBox = CGRect(x: 0, y: 0, width: 100, height: 10)
+        let mlResult = classifyWithMLSynchronously(text: cleanText, boundingBox: defaultBoundingBox)
+        
+        if mlResult.isValid {
+            return SerialValidationResult(
+                isValid: true,
+                cleanedSerial: cleanText,
+                rejectionReason: nil,
+                confidence: mlResult.confidence
+            )
+        } else {
+            // Map ML rejection to closest legacy reason for compatibility
+            let invalidCharacters = Set(cleanText).subtracting(SerialValidator.allowedCharacters)
+            let rejection: RejectionReason = !invalidCharacters.isEmpty
+                ? .invalidCharacters(Array(invalidCharacters))
+                : (cleanText.count < minimumLength || cleanText.count > maximumLength)
+                    ? .invalidLength(cleanText.count)
+                    : .patternMismatch
+            
             return SerialValidationResult(
                 isValid: false,
                 cleanedSerial: cleanText,
-                rejectionReason: .invalidLength(cleanText.count),
-                confidence: 0.0
+                rejectionReason: rejection,
+                confidence: mlResult.confidence
             )
         }
-        
-        // Alphabet check
-        let invalidCharacters = Set(cleanText).subtracting(SerialValidator.allowedCharacters)
-        guard invalidCharacters.isEmpty else {
-            return SerialValidationResult(
-                isValid: false,
-                cleanedSerial: cleanText,
-                rejectionReason: .invalidCharacters(Array(invalidCharacters)),
-                confidence: 0.0
-            )
-        }
-        
-        // Regex pattern check
-        let regex = useStrictValidation ? strictRegex : flexibleRegex
-        let range = NSRange(location: 0, length: cleanText.utf16.count)
-        let matches = regex.matches(in: cleanText, options: [], range: range)
-        
-        guard !matches.isEmpty else {
-            return SerialValidationResult(
-                isValid: false,
-                cleanedSerial: cleanText,
-                rejectionReason: .patternMismatch,
-                confidence: 0.0
-            )
-        }
-        
-        // Calculate confidence based on common Apple serial patterns
-        let confidence = calculateSerialConfidence(cleanText)
-        
-        return SerialValidationResult(
-            isValid: true,
-            cleanedSerial: cleanText,
-            rejectionReason: nil,
-            confidence: confidence
-        )
     }
     
-    /// Batch validates multiple candidates and returns the best valid one
+    /// Batch validates multiple candidates via ML classifier and returns the best valid one
     func validateCandidates(_ candidates: [TextCandidate]) -> ValidationResult {
         var validCandidates: [ValidatedCandidate] = []
         var rejectedCandidates: [RejectedCandidate] = []
         
         for candidate in candidates {
-            let validation = validateSerial(candidate.text)
+            let cleanText = candidate.text.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+            let mlResult = classifyWithMLSynchronously(text: cleanText, boundingBox: candidate.boundingBox)
+            
+            let validation = SerialValidationResult(
+                isValid: mlResult.isValid,
+                cleanedSerial: cleanText,
+                rejectionReason: mlResult.isValid ? nil : .patternMismatch,
+                confidence: mlResult.confidence
+            )
             
             if validation.isValid {
                 validCandidates.append(ValidatedCandidate(
@@ -103,7 +97,6 @@ class SerialValidator {
             }
         }
         
-        // Sort by composite score (OCR confidence + serial pattern confidence)
         validCandidates.sort { $0.compositeScore > $1.compositeScore }
         
         return ValidationResult(
@@ -163,6 +156,33 @@ class SerialValidator {
     /// Reset validator internal caches/state (used by recovery coordinator)
     func reset() {
         // No-op for now; placeholder for future stateful validator caches.
+    }
+    // MARK: - ML Bridge
+    private func classifyWithMLSynchronously(text: String, boundingBox: CGRect) -> (isValid: Bool, confidence: Float) {
+        // Bridge async ML classifier to sync API using a semaphore
+        let semaphore = DispatchSemaphore(value: 0)
+        var resultIsValid = false
+        var resultConfidence: Float = 0.0
+        
+        Task {
+            do {
+                let classification = try await mlClassifier.classifySerial(
+                    text: text,
+                    boundingBox: boundingBox,
+                    textObservation: nil
+                )
+                resultIsValid = classification.isAppleSerial
+                resultConfidence = classification.confidence
+            } catch {
+                resultIsValid = false
+                resultConfidence = 0.0
+            }
+            semaphore.signal()
+        }
+        
+        // Wait for completion (with a reasonable timeout to avoid deadlocks)
+        _ = semaphore.wait(timeout: .now() + 1.0)
+        return (resultIsValid, resultConfidence)
     }
 }
 
