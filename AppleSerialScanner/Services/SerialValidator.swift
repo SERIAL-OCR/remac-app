@@ -11,8 +11,8 @@ class SerialValidator {
     private let strictPattern = "^[A-HJ-NP-Z0-9]{12}$"
     private let flexiblePattern = "^[A-HJ-NP-Z0-9]{10,12}$"
     
-    private let strictRegex: NSRegularExpression
-    private let flexibleRegex: NSRegularExpression
+    private let strictRegex: NSRegularExpression?
+    private let flexibleRegex: NSRegularExpression?
     
     // Configuration
     private let useStrictValidation: Bool
@@ -29,7 +29,9 @@ class SerialValidator {
             strictRegex = try NSRegularExpression(pattern: strictPattern, options: [])
             flexibleRegex = try NSRegularExpression(pattern: flexiblePattern, options: [])
         } catch {
-            fatalError("Failed to initialize serial validation regex: \(error)")
+            // Fallback: disable regex-based validation but keep ML path working
+            strictRegex = nil
+            flexibleRegex = nil
         }
     }
     

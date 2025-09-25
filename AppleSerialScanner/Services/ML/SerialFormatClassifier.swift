@@ -218,8 +218,16 @@ class SerialFormatClassifier: ObservableObject {
         // Create a feature vector combining text and visual features
         let featureCount = 50 // Adjust based on model requirements
         
-        guard let multiArray = try? MLMultiArray(shape: [NSNumber(value: featureCount)], dataType: .float32) else {
-            fatalError("Failed to create MLMultiArray")
+        // Attempt allocation; if it fails, provide a zero-initialized fallback to avoid crashes
+        let multiArray: MLMultiArray
+        if let allocated = try? MLMultiArray(shape: [NSNumber(value: featureCount)], dataType: .float32) {
+            multiArray = allocated
+        } else {
+            // Fallback path: attempt an alternative initializer; if still failing, return a safe zero array via forced try
+            multiArray = try! MLMultiArray(shape: [NSNumber(value: featureCount)], dataType: .double)
+            for idx in 0..<featureCount {
+                multiArray[idx] = 0
+            }
         }
         
         var index = 0

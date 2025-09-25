@@ -2,16 +2,12 @@ import XCTest
 @testable import AppleSerialScanner
 
 final class Phase10Tests: XCTestCase {
-    func testEnhancedSerialValidatorValidSerial() {
-        let validator = EnhancedSerialValidator()
-        let result = validator.validateSerial("ABCDEFG12345", confidence: 0.9)
+    func testSerialValidatorValidSerial() {
+        let validator = SerialValidator()
+        let result = validator.validateSerial("ABCDEFG12345")
 
-        switch result {
-        case .valid(let cleaned):
-            XCTAssertEqual(cleaned.count, 12)
-        default:
-            XCTFail("Expected valid result for a 12-char alphanumeric serial")
-        }
+        XCTAssertTrue(result.isValid)
+        XCTAssertEqual(result.cleanedSerial.count, 12)
     }
 
     func testTelemetryTrackSettingChangeDoesNotCrash() {
