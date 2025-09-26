@@ -46,7 +46,7 @@
 						<integer>36</integer>
 					</array>
 					<key>MLMultiArrayFeatureDescriptionDataType</key>
-					<string>string</string>
+					<string>int32</string>
 				</dict>
 				<key>confidences</key>
 				<dict>
