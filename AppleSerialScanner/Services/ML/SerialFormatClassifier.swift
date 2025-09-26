@@ -203,7 +203,7 @@ class SerialFormatClassifier: ObservableObject {
     private func runClassification(text: String, features: SerialFeatures) async throws -> Float {
         let model = try await modelLoader.loadSerialFormatClassifier()
         // Create feature vector for the model
-        let featureVector = createFeatureVector(text: text, features: features)
+        let featureVector = try createFeatureVector(text: text, features: features)
         // Prepare input as a dictionary for the generic Core ML API
         let inputFeatures: [String: Any] = [
             "featureVector": featureVector
@@ -214,12 +214,12 @@ class SerialFormatClassifier: ObservableObject {
         return extractConfidenceScore(from: output)
     }
     
-    private func createFeatureVector(text: String, features: SerialFeatures) -> MLMultiArray {
+    private func createFeatureVector(text: String, features: SerialFeatures) throws -> MLMultiArray {
         // Create a feature vector combining text and visual features
         let featureCount = 50 // Adjust based on model requirements
         
         guard let multiArray = try? MLMultiArray(shape: [NSNumber(value: featureCount)], dataType: .float32) else {
-            fatalError("Failed to create MLMultiArray")
+            throw MLClassificationError.featureExtractionFailed
         }
         
         var index = 0

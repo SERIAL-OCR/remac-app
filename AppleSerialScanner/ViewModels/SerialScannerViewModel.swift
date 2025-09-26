@@ -99,7 +99,7 @@ class SerialScannerViewModel: NSObject, ObservableObject {
     
     // MARK: - Service Properties
     private let backendService = BackendService()
-    private let validator = AppleSerialValidator()
+    private let validator = SerialValidator()
     private let surfaceDetector = SurfaceDetector()
     private let lightingAnalyzer = LightingAnalyzer()
     private let angleDetector = AngleDetector()
@@ -529,10 +529,18 @@ extension SerialScannerViewModel {
         recognizedText = serial
         bestConfidence = confidence
         
-        // Validate the serial using existing validation logic
-        let appleValidationResult = validator.validate_with_corrections(serial, confidence)
+        // Validate the serial using ML-backed validator
+        let validation = validator.validateSerial(serial)
+        let decisionLevel: ValidationDecisionLevel
+        if validation.isValid {
+            // Map to prior levels using combined confidence (VisionKit/conf + validator.confidence)
+            let combinedConfidence = max(confidence, validation.confidence)
+            decisionLevel = combinedConfidence >= 0.9 ? .ACCEPT : .BORDERLINE
+        } else {
+            decisionLevel = .REJECT
+        }
         
-        switch appleValidationResult.level {
+        switch decisionLevel {
         case .ACCEPT:
             // Auto-submit high confidence serials
             submitSerial(serial)
@@ -549,7 +557,7 @@ extension SerialScannerViewModel {
             guidanceText = "Invalid format detected - continue scanning"
         }
         
-        logger.info("VisionKit high confidence serial processed: \(serial) -> \(appleValidationResult.level)")
+        logger.info("VisionKit high confidence serial processed: \(serial) -> \(decisionLevel)")
     }
     
     /// Checks if VisionKit is available on the current device
@@ -569,6 +577,9 @@ extension SerialScannerViewModel {
         }
     }
 }
+
+// Local mapping to preserve previous semantic levels
+private enum ValidationDecisionLevel { case ACCEPT, BORDERLINE, REJECT }
 
 // MARK: - Frame Result Model
 struct FrameResult {

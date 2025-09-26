@@ -3,15 +3,10 @@ import XCTest
 
 final class Phase10Tests: XCTestCase {
     func testEnhancedSerialValidatorValidSerial() {
-        let validator = EnhancedSerialValidator()
-        let result = validator.validateSerial("ABCDEFG12345", confidence: 0.9)
-
-        switch result {
-        case .valid(let cleaned):
-            XCTAssertEqual(cleaned.count, 12)
-        default:
-            XCTFail("Expected valid result for a 12-char alphanumeric serial")
-        }
+        let validator = SerialValidator()
+        let result = validator.validateSerial("ABCDEFG12345")
+        XCTAssertTrue(result.isValid)
+        XCTAssertEqual(result.cleanedSerial.count, 12)
     }
 
     func testTelemetryTrackSettingChangeDoesNotCrash() {

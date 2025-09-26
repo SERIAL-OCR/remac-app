@@ -177,9 +177,38 @@ struct AnalyticsMetricsCards: View {
     }
 
     private func calculateTrend(_ metric: AnalyticsDashboardView.MetricType) -> String? {
-        // TODO: Calculate trend from weekly data
-        // This would be implemented based on historical data
-        return "+5.2%" // Placeholder
+        // Compute percentage change between last and first entries of the weekly trend
+        guard let weekly = analyticsService.dashboardData?.weeklyTrend else { return nil }
+
+        func percentChange<T: BinaryFloatingPoint>(_ first: T, _ last: T) -> String? {
+            guard first != 0 else { return nil }
+            let change = (Double(last) - Double(first)) / Double(first)
+            let pct = change * 100.0
+            return String(format: "%+.1f%%", pct)
+        }
+
+        switch metric {
+        case .successRate, .usage:
+            // Use usageTrend as a proxy for growth of scans
+            let sorted = weekly.usageTrend.sorted { $0.key < $1.key }
+            guard let first = sorted.first?.value, let last = sorted.last?.value, first > 0 else { return nil }
+            let change = (Double(last) - Double(first)) / Double(first) * 100.0
+            return String(format: "%+.1f%%", change)
+        case .accuracy:
+            let sorted = weekly.accuracyTrend.sorted { $0.key < $1.key }
+            guard let first = sorted.first?.value, let last = sorted.last?.value else { return nil }
+            return percentChange(first, last)
+        case .processingTime, .performance:
+            let sorted = weekly.performanceTrend.sorted { $0.key < $1.key }
+            guard let first = sorted.first?.value, let last = sorted.last?.value else { return nil }
+            // For time, improvement is negative change; still show signed percent
+            return percentChange(first, last)
+        case .reliability:
+            // No dedicated series; infer from accuracy trend
+            let sorted = weekly.accuracyTrend.sorted { $0.key < $1.key }
+            guard let first = sorted.first?.value, let last = sorted.last?.value else { return nil }
+            return percentChange(first, last)
+        }
     }
 }
 
