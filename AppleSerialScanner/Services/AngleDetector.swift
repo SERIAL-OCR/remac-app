@@ -250,9 +250,23 @@ class AngleDetector: ObservableObject {
         
         let areaComponent = Float(orientation.textBounds.width * orientation.textBounds.height) * 0.3
         
-        // TODO: Replace with actual stability data from motion manager
-        let stabilityWeight = 0.8
-        let stabilityComponent = stabilityWeight * 0.2
+        // Incorporate device motion stability (if available) to reduce jitter
+        #if os(iOS)
+        var motionStability: Float = 0.0
+        if let motion = motionManager?.deviceMotion {
+            // Use user acceleration magnitude as instability proxy; lower is more stable
+            let ax = motion.userAcceleration.x
+            let ay = motion.userAcceleration.y
+            let az = motion.userAcceleration.z
+            let magnitude = sqrt(ax * ax + ay * ay + az * az)
+            // Map magnitude [0, ~0.2+] to stability [1, 0]
+            motionStability = Float(max(0.0, 1.0 - min(1.0, magnitude / 0.2)))
+        }
+        #else
+        let motionStability: Float = 0.0
+        #endif
+        let stabilityWeight: Float = 0.8
+        let stabilityComponent = stabilityWeight * motionStability
         
         return confidenceComponent + areaComponent + Float(stabilityComponent)
     }

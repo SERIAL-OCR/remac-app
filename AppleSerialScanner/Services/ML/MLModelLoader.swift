@@ -186,7 +186,14 @@ public final class MLModelLoader: ObservableObject {
         // Use the bridged CoreML configuration produced by our custom configuration
         let coreMLConfig = configuration.mlConfiguration
         
-        // Now use the native CoreML configuration
+        // Preflight presence check and then use the native CoreML configuration
+        let hasPackage = Bundle.main.url(forResource: bundleName, withExtension: "mlpackage") != nil
+        let hasModel = Bundle.main.url(forResource: bundleName, withExtension: "mlmodel") != nil
+        if !hasPackage && !hasModel {
+            logger.error("Model files missing for \(name). Ensure \(bundleName).mlmodel or .mlpackage is added to target resources.")
+            throw MLModelError.modelNotFound(name)
+        }
+
         if let packageURL = Bundle.main.url(forResource: bundleName, withExtension: "mlpackage") {
             logger.info("Loading \(name) from .mlpackage")
             model = try MLModel(contentsOf: packageURL, configuration: coreMLConfig)

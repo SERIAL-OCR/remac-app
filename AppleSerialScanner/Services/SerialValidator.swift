@@ -27,9 +27,18 @@ class SerialValidator {
         // Initialize regex patterns
         do {
             strictRegex = try NSRegularExpression(pattern: strictPattern, options: [])
+        } catch {
+            AppLogger.ui.error("Failed to initialize strict serial regex: \(error.localizedDescription)")
+            // Fallback to a permissive regex to avoid crashing; will be filtered later
+            strictRegex = try! NSRegularExpression(pattern: ".*", options: [])
+        }
+
+        do {
             flexibleRegex = try NSRegularExpression(pattern: flexiblePattern, options: [])
         } catch {
-            fatalError("Failed to initialize serial validation regex: \(error)")
+            AppLogger.ui.error("Failed to initialize flexible serial regex: \(error.localizedDescription)")
+            // Disable flexible regex path by using a regex that never matches invalid lengths
+            flexibleRegex = try! NSRegularExpression(pattern: "^$", options: [])
         }
     }
     
