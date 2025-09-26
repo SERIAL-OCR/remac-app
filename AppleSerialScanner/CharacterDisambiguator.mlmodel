@@ -137,7 +137,7 @@
 					<dict>
 						<key>MLConvolutionLayerParamsBias</key>
 						<array>
-							<real>0.0</real>
+							<real>-0.1</real>
 						</array>
 						<key>MLConvolutionLayerParamsKernelChannels</key>
 						<integer>3</integer>
@@ -155,15 +155,15 @@
 						</array>
 						<key>MLConvolutionLayerParamsWeights</key>
 						<array>
+							<real>0.2</real>
+							<real>-0.1</real>
+							<real>0.3</real>
+							<real>-0.2</real>
+							<real>0.4</real>
+							<real>-0.3</real>
 							<real>0.1</real>
-							<real>0.1</real>
-							<real>0.1</real>
-							<real>0.1</real>
-							<real>0.1</real>
-							<real>0.1</real>
-							<real>0.1</real>
-							<real>0.1</real>
-							<real>0.1</real>
+							<real>-0.4</real>
+							<real>0.2</real>
 						</array>
 					</dict>
 				</dict>
@@ -203,7 +203,7 @@
 					<dict>
 						<key>MLInnerProductLayerParamsBias</key>
 						<array>
-							<real>0.0</real>
+							<real>0.1</real>
 						</array>
 						<key>MLInnerProductLayerParamsInputChannels</key>
 						<integer>225</integer>
@@ -211,7 +211,16 @@
 						<integer>36</integer>
 						<key>MLInnerProductLayerParamsWeights</key>
 						<array>
-							<real>0.1</real>
+							<real>0.15</real>
+							<real>-0.08</real>
+							<real>0.22</real>
+							<real>-0.12</real>
+							<real>0.18</real>
+							<real>-0.15</real>
+							<real>0.25</real>
+							<real>-0.09</real>
+							<real>0.13</real>
+							<real>-0.20</real>
 						</array>
 					</dict>
 				</dict>
